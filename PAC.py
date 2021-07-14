@@ -243,13 +243,14 @@ def compute_target_bmr_guide_spikes_coords_mm(petal) :
         plt.xlabel("X_CS5 (mm)")
         plt.ylabel("Y_CS5 (mm)")
 
-        plt.figure("GS1")
-        bmr_GS1CS_mm = bmr_GS1CS_inch * inch2mm
-        plt.plot(bmr_GS1CS_mm[0],bmr_GS1CS_mm[1],"o",markersize=12,label="bmr")
-        plt.gca().set_aspect('equal', adjustable='box')
-        plt.grid()
-        plt.xlabel("X_GS1 (mm)")
-        plt.ylabel("Y_GS1 (mm)")
+        if 0 :
+            plt.figure("GS1")
+            bmr_GS1CS_mm = bmr_GS1CS_inch * inch2mm
+            plt.plot(bmr_GS1CS_mm[0],bmr_GS1CS_mm[1],"o",markersize=12,label="bmr")
+            plt.gca().set_aspect('equal', adjustable='box')
+            plt.grid()
+            plt.xlabel("X_GS1 (mm)")
+            plt.ylabel("Y_GS1 (mm)")
     return bmr_CS5_mm
 
 ######################################################################
@@ -443,11 +444,11 @@ inch2mm = 25.4
 
 
 # Petal Position (Per DESI-3596)
-petal = 0
+petal = 6
 
 # Which BMR (Ball Mount Refectors) mount plate is used. 3 choices
-bmr_type = "guide_spikes" # BMR plate mounted on the petal guide spikes for petal insertion procedure
-#bmr_type = "light_weight_red_leg" # BMR plate mounted at the tip of the red
+#bmr_type = "guide_spikes" # BMR plate mounted on the petal guide spikes for petal insertion procedure
+bmr_type = "light_weight_red_leg" # BMR plate mounted at the tip of the red
 #bmr_type = "heavy_weight_red_leg" # BMR plate mounted at the tip of the red with a weight matching that of a petal
 
 # Input BMR Locations (in CS5, will change input method later)
@@ -455,12 +456,26 @@ measured_bmr_CS5_inch = np.zeros((3,4))
 if bmr_type == "heavy_weight_red_leg" :
     measured_bmr_CS5_inch = np.zeros((3,5))
 
-measured_bmr_CS5_inch[:,0] = [3.3247, -16.5683, -55.9022]
-measured_bmr_CS5_inch[:,1] = [1.7563, -18.9263, -55.9158]
-measured_bmr_CS5_inch[:,2] = [-3.5547, -20.3330, -55.9186]
-measured_bmr_CS5_inch[:,3] = [-3.1565, -16.5614, -55.9040]
+bmr_labels=["B1","B2","B3","B4"]
 
-valid_bmr = (np.sum(measured_bmr_CS5_inch**2,axis=0)>0)
+# petal 0 (test of Van)
+# measured_bmr_CS5_inch[:,0] = [3.3247, -16.5683, -55.9022]
+# measured_bmr_CS5_inch[:,1] = [1.7563, -18.9263, -55.9158]
+# measured_bmr_CS5_inch[:,2] = [-3.5547, -20.3330, -55.9186]
+# measured_bmr_CS5_inch[:,3] = [-3.1565, -16.5614, -55.9040]
+
+# petal 6 solidworks test
+# measured_bmr_CS5_inch[:,0] = [-12.478,11.377,-55.906]
+# measured_bmr_CS5_inch[:,1] = [-12.595,14.207,-55.916]
+# measured_bmr_CS5_inch[:,2] = [-9.126,18.467,-55.909]
+# measured_bmr_CS5_inch[:,3] = [-7.231,15.181,-55.898]
+
+# petal 6 solidworks test after re-alignement
+measured_bmr_CS5_inch[:,0] = [-12.373,11.526,-55.892]
+measured_bmr_CS5_inch[:,1] = [-12.491,14.356,-55.910]
+measured_bmr_CS5_inch[:,2] = [-9.021,18.616,-55.922]
+measured_bmr_CS5_inch[:,3] = [-7.126,15.331,-55.905]
+# this validates the python code for the "guide spike" bmr
 
 # Options
 debug = True
@@ -468,6 +483,9 @@ plot  = True
 
 ######################################################################
 ######################################################################
+
+valid_bmr = (np.sum(measured_bmr_CS5_inch**2,axis=0)>0)
+print(valid_bmr)
 
 assert ( bmr_type in ["guide_spikes","light_weight_red_leg","heavy_weight_red_leg"] )
 
@@ -520,6 +538,9 @@ print("Struts deltas (inch):")
 for s,d in enumerate(strut_deltas_inch) :
     print("  {} {:+.3f}".format(struts_labels[s],d))
 
+print("Struts deltas (mm):")
+for s,d in enumerate(strut_deltas_inch) :
+    print("  {} {:+.3f}".format(struts_labels[s],d*inch2mm))
 
 predicted_new_bmr_PMA_inch = pma_adjust.apply(measured_bmr_PMA_inch)
 dist2_inch = np.sum((predicted_new_bmr_PMA_inch - target_bmr_PMA_inch)**2,axis=0)
@@ -540,6 +561,16 @@ print("=================================================")
 
 if plot :
     plt.figure("CS5")
+
+
+    xyz    = measured_bmr_CS5_inch*inch2mm
+    for b in range(measured_bmr_CS5_inch.shape[1]) :
+        if not valid_bmr[b]:
+            print("ball {} has not valid data".format(bmr_labels[b]))
+            continue
+        plt.plot(xyz[0,b],xyz[1,b],"o",color="k",alpha=0.5)
+        plt.text(xyz[0,b]+10,xyz[1,b]+10,bmr_labels[b],color="k")
+
     x_cs5=[]
     y_cs5=[]
     z_cs5=[]
@@ -589,6 +620,8 @@ if plot :
         ax.scatter3D(xyz[0],xyz[1],xyz[2],color="green",label="measured BMR")
         xyz=xyz2plot(target_bmr_PMA_inch)
         ax.scatter3D(xyz[0],xyz[1],xyz[2],color="blue",label="target BMR")
+        for b in range(4) :
+            ax.text3D(xyz[0,b],xyz[1,b],xyz[2,b],bmr_labels[b],color="blue")
 
         # focal plane
         t=np.linspace(0,2*np.pi,100)
