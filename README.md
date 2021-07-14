@@ -3,7 +3,7 @@
 ## Purpose
 
 Determine the length of the 6 PMA struts based on the laser tracker measured coordinates
-of a array of reflective balls (Ball Mount Reflectors in the code).
+of an array of reflective balls (Ball Mount Reflectors in the code), for different configurations.
 
 3 BMR setups are supported
 
@@ -13,12 +13,18 @@ of a array of reflective balls (Ball Mount Reflectors in the code).
 
 
 ## Documents
-
- * DESI-3224 addendum: Procedure for transverse card swap campaign
- * DESI-4949 FPP Laser Target Mount Metrology
+### Metrology
+ * DESI-4754 FPD Laser Track Nest Metrology 
+ 
+      (FPD=Focal Plane aDapter, the large conic cylinder that holds the petal ring, this defines CS5 for the alignment) 
+    
+ * DESI-4949 FPP Laser Target Mount Metrology (FPP=Focal Plane Petal)
  * DESI-6206 Red Leg tip mounting holes metrology
  * DESI-6207-B Leg Laser Target Mount Metrology
  * DESI-6211-B FPP Mass Dummy Endplate Metrology
+### Other
+ * DESI-5905 Precision Alignment and Integration of DESI's Focal Plane using a Laser Tracker
+ * DESI-3224 addendum: Procedure for transverse card swap campaign
 
 ## Usage
 
