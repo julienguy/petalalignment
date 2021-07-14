@@ -15,7 +15,8 @@ of a array of reflective balls (Ball Mount Reflectors in the code).
 ## Documents
 
  * DESI-3224 addendum: Procedure for transverse card swap campaign
- * DESI-6206 Red Leg til mounting holes metrology
+ * DESI-4949 FPP Laser Target Mount Metrology
+ * DESI-6206 Red Leg tip mounting holes metrology
  * DESI-6207-B Leg Laser Target Mount Metrology
  * DESI-6211-B FPP Mass Dummy Endplate Metrology
 
