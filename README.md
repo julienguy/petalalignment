@@ -23,6 +23,7 @@ of an array of reflective balls (Ball Mount Reflectors in the code), for differe
  * DESI-6207-B Leg Laser Target Mount Metrology
  * DESI-6211-B FPP Mass Dummy Endplate Metrology
 ### Other
+ * DESI-5905 Precision Alignment and Integration of DESI's Focal Plane using a Laser Tracker
  * DESI-3224 addendum: Procedure for transverse card swap campaign
 
 ## Usage
