@@ -447,8 +447,8 @@ inch2mm = 25.4
 petal = 6
 
 # Which BMR (Ball Mount Refectors) mount plate is used. 3 choices
-#bmr_type = "guide_spikes" # BMR plate mounted on the petal guide spikes for petal insertion procedure
-bmr_type = "light_weight_red_leg" # BMR plate mounted at the tip of the red
+bmr_type = "guide_spikes" # BMR plate mounted on the petal guide spikes for petal insertion procedure
+#bmr_type = "light_weight_red_leg" # BMR plate mounted at the tip of the red
 #bmr_type = "heavy_weight_red_leg" # BMR plate mounted at the tip of the red with a weight matching that of a petal
 
 # Input BMR Locations (in CS5, will change input method later)
