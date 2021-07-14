@@ -484,6 +484,9 @@ target_bmr_PMA_inch   = CS5_to_PMA_inch(target_bmr_CS5_inch)
 measured_bmr_PMA_inch = CS5_to_PMA_inch(measured_bmr_CS5_inch)
 
 
+# struts labels
+struts_labels = ["S1","S2","S3","S4","S5","S6"]
+
 # Reference coordinates of the base ends of the PMA struts in the PMA CS
 struts_base_coords_inch     = np.array([[-26.875, -26.875, 26.875, 26.875, 15.475, 31.25],
                                    [-43.811, -42.561, -43.811, -42.561, -42.561, -43.811],
@@ -512,8 +515,10 @@ new_struts_platform_coords_inch = pma_adjust.apply(initial_struts_platform_coord
 
 new_struts_length_inch = np.sqrt(np.sum((new_struts_platform_coords_inch - struts_base_coords_inch)**2,axis=0))
 print("New struts length (inch)     =",array2str(new_struts_length_inch))
-strut_deltas = new_struts_length_inch - initial_struts_length_inch
-print("struts deltas (inch)         =",array2str(strut_deltas))
+strut_deltas_inch = new_struts_length_inch - initial_struts_length_inch
+print("Struts deltas (inch):")
+for s,d in enumerate(strut_deltas_inch) :
+    print("  {} {:+.3f}".format(struts_labels[s],d))
 
 
 predicted_new_bmr_PMA_inch = pma_adjust.apply(measured_bmr_PMA_inch)
@@ -529,7 +534,7 @@ if rms_mm > 1 :
     print("!!! ERROR fit rms = {:.3f} mm !!!".format(rms_mm))
     print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
 else :
-    print("fit rms = {:.3f} mm".format(rms_mm))
+    print("Fit rms = {:.3f} mm".format(rms_mm))
 print("=================================================")
 
 
@@ -575,7 +580,8 @@ if plot :
             ax.plot3D([xyz1[0,s],xyz2[0,s]],
                       [xyz1[1,s],xyz2[1,s]],
                       [xyz1[2,s],xyz2[2,s]],
-                  color="red",label=label)
+                  color="red")
+            ax.text3D(xyz1[0,s],xyz1[1,s],xyz1[2,s],struts_labels[s],color="red")
             label=None
 
         # bmr
