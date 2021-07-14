@@ -3,7 +3,7 @@
 ## Purpose
 
 Determine the length of the 6 PMA struts based on the laser tracker measured coordinates
-of a array of reflective balls (Ball Mount Reflectors in the code).
+of an array of reflective balls (Ball Mount Reflectors in the code), for different configurations.
 
 3 BMR setups are supported
 
