@@ -475,28 +475,72 @@ measured_bmr_CS5_inch[:,0] = [-12.373,11.526,-55.892]
 measured_bmr_CS5_inch[:,1] = [-12.491,14.356,-55.910]
 measured_bmr_CS5_inch[:,2] = [-9.021,18.616,-55.922]
 measured_bmr_CS5_inch[:,3] = [-7.126,15.331,-55.905]
-# this validates the python code for the "guide spike" bmr
+# this validates the python code for the "guide spike" bmr (tag this v0.1.0)
 
 # Options
 debug = True
 plot  = True
 
+correct_pma_misalignement = True # (if True, requires the following 3 measurements)
+# measurements of changes of PMA translation axis alignment
+# will measure twice the same fixed point in the PMA
+# once with carriage engaged as close as possible to focal plane
+# once with carriage in std retracted rest position
+measured_pma_partially_engaged_bmr_CS5_inch = np.array([0.,0.,-10])
+measured_pma_retracted_bmr_CS5_inch = np.array([0.,0.,-150])
+# z_CS5 of fixed point when PMA fully engaged
+pma_fully_engaged_bmr_z_CS5_inch = -5. # need to compute this
+
+######################################################################
+######################################################################
+## end of inputs
 ######################################################################
 ######################################################################
 
 valid_bmr = (np.sum(measured_bmr_CS5_inch**2,axis=0)>0)
-print(valid_bmr)
 
-assert ( bmr_type in ["guide_spikes","light_weight_red_leg","heavy_weight_red_leg"] )
-
+# Compute target bmr coords in CS5 from metrology
+#################################################
 if bmr_type == "guide_spikes" :
     target_bmr_CS5_mm  = compute_target_bmr_guide_spikes_coords_mm(petal)
 elif bmr_type== "light_weight_red_leg" :
     target_bmr_CS5_mm = compute_target_bmr_light_weight_red_leg_coords_mm(petal)
 elif bmr_type== "heavy_weight_red_leg" :
     target_bmr_CS5_mm = compute_target_bmr_heavy_weight_red_leg_coords_mm(petal)
-
+else :
+    print('error {} not in ["guide_spikes","light_weight_red_leg","heavy_weight_red_leg"]'.format(bmr_type))
+    sys.exit(12)
 target_bmr_CS5_inch = target_bmr_CS5_mm/inch2mm
+#################################################
+
+
+
+# Compute PMA translation correction
+##############################################################
+if correct_pma_misalignement :
+
+    # First extrapolate PMA measurement to fully engage location
+    measured_pma_fully_engaged_bmr_CS5_inch = measured_pma_partially_engaged_bmr_CS5_inch + (measured_pma_partially_engaged_bmr_CS5_inch-measured_pma_retracted_bmr_CS5_inch) * (pma_fully_engaged_bmr_z_CS5_inch-measured_pma_partially_engaged_bmr_CS5_inch[2])/(measured_pma_partially_engaged_bmr_CS5_inch[2]-measured_pma_retracted_bmr_CS5_inch[2])
+
+    # Correction to apply to the input coordinates when retracted
+    # so the final coords after engaging the carriage are correct.
+    correction_when_retracting_pma_inch = measured_pma_retracted_bmr_CS5_inch - measured_pma_fully_engaged_bmr_CS5_inch
+
+    dtrans = np.sqrt(correction_when_retracting_pma_inch[0]**2+correction_when_retracting_pma_inch[1]**2)
+    angle_deg  = np.arctan(dtrans/correction_when_retracting_pma_inch[2])*180./np.pi
+    print("Apply a correction due to the PMA misalignment of {:.1f} degrees of dx,dy= {:+.3f},{:+.3f} inch".format(angle_deg,
+                                                                                                               correction_when_retracting_pma_inch[0],correction_when_retracting_pma_inch[1]))
+    if len(target_bmr_CS5_inch.shape) == 1 :
+        target_bmr_CS5_inch[0:2] += correction_when_retracting_pma_inch[0:2] # change only x and y
+    else :
+        target_bmr_CS5_inch[0:2] += correction_when_retracting_pma_inch[0:2][:,None]
+
+##############################################################
+
+
+measured_pma_partially_engaged_bmr_CS5_inch
+
+
 
 target_bmr_PMA_inch   = CS5_to_PMA_inch(target_bmr_CS5_inch)
 measured_bmr_PMA_inch = CS5_to_PMA_inch(measured_bmr_CS5_inch)
