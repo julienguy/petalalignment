@@ -1,0 +1,25 @@
+# Test with solidworks model
+
+# Petal Position (Per DESI-3596)
+
+petal: 6
+
+# Which BMR (Ball Mount Refectors) mount plate configuration is used.
+# 3 choices :
+#  "guide_spikes" BMR plate mounted on the petal guide spikes for petal insertion procedure
+#  "light_weight_red_leg" # BMR plate mounted at the tip of the red
+#  ""heavy_weight_red_leg" # BMR plate mounted at the tip of the red with a weight matching that of a petal
+
+bmr_type: "guide_spikes"
+
+# PMA translation axis misalignment parameters
+# Are we going to correct for PMA axis misalignment ( 0 or 1 )
+correct_pma_misalignement: 0
+
+# Measurements from laser tracker in CS5 in inches
+# X , Y , Z
+
+B1: -12.478,11.377,-55.906
+B2: -12.595,14.207,-55.916
+B3: -9.126,18.467,-55.909
+B4: -7.231,15.181,-55.898

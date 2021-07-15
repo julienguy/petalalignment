@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import sys
+import sys,os
 import numpy as np
 import scipy.optimize as opt
 import matplotlib.pyplot as plt
+import yaml
 
 inch2mm = 25.4
 ######################################################################
-debug = True
 plot  = True
 ######################################################################
 
@@ -239,7 +239,7 @@ def compute_target_bmr_guide_spikes_coords_mm(petal) :
     ## convert inch to mm
     bmr_CS5_mm = bmr_CS5_inch*inch2mm
 
-    if debug and plot :
+    if plot :
         import matplotlib.pyplot as plt
         plt.figure("CS5")
         plt.plot(bmr_CS5_mm[0],bmr_CS5_mm[1],"o",markersize=12,label="bmr")
@@ -288,7 +288,7 @@ def get_red_leg_mount_holes_in_CS5_mm(petal) :
                                  [-225.1918,-411.8911,-265.4000,-213.4918,-352.3719,-265.4000,-280.3981,-321.3175,-265.4000]])
 
 
-    if debug and plot :
+    if plot :
         import matplotlib.pyplot as plt
         plt.figure("CS5")
         for p in range(10) :
@@ -309,7 +309,7 @@ def get_red_leg_mount_holes_in_6206_mm() :
     # from DESI-6206
     # with permutation of holes to get same references as in Pat's spreadsheet CS5LegHoles.xlsx
     red_leg_holes_6206_mm = np.array([[26.7884204,-3.6420895,0],[-14.5357283,40.8529444,0],[-79.0081898,4.964665,0]]).T
-    if False and debug and plot :
+    if False and plot :
         import matplotlib.pyplot as plt
         plt.figure("red_leg_mount_holes_6206")
         plt.plot(red_leg_holes_6206_mm[0,0],red_leg_holes_6206_mm[1,0],"o",color="b",label="hole1")
@@ -349,7 +349,7 @@ def compute_target_bmr_light_weight_red_leg_coords_mm(petal) :
     bmr_6206_mm = C6207_to_C6206.apply(bmr_6207_mm)
     bmr_CS5_mm  = C6206_to_CS5.apply(bmr_6206_mm)
 
-    if debug and plot :
+    if plot :
         import matplotlib.pyplot as plt
         plt.figure("CS5")
         plt.plot(red_leg_mount_holes_CS5_mm[0,0],red_leg_mount_holes_CS5_mm[1,0],"o",color="b",label="hole1")
@@ -408,7 +408,7 @@ def compute_target_bmr_heavy_weight_red_leg_coords_mm(petal) :
     bmr_6206_mm = C6211_to_C6206.apply(bmr_6211_mm)
     bmr_CS5_mm  = C6206_to_CS5.apply(bmr_6206_mm)
 
-    if debug and plot :
+    if plot :
         import matplotlib.pyplot as plt
         plt.figure("CS5")
         plt.plot(red_leg_mount_holes_CS5_mm[0,0],red_leg_mount_holes_CS5_mm[1,0],"o",color="b",label="hole1")
@@ -438,89 +438,100 @@ def compute_target_bmr_heavy_weight_red_leg_coords_mm(petal) :
 
     return bmr_CS5_mm
 
+
+def str2array(vals) :
+    res = [float(v) for v in vals.split(",")]
+    return np.array(res)
+
 def main() :
 
+    # Read inputs
+    #################################################
+    if len(sys.argv)>1 :
+        ifilename = sys.argv[1]
+    else :
+        print("""
+Please add as an argument a filename.
+I will use a default file for now as a code test.
+        """)
+        ifilename = "test-petal0.yaml"
 
-    file=open("measurements.csv")
-    vals=file.readlines()
-    file.close()
-    print("read:")
-    print(vals)
-    sys.exit(12)
+    if not os.path.isfile(ifilename) :
+        print("cannot find or open",ifilename)
+        sys.exit(1)
+
+    print("Input filename:",ifilename)
+
+    with open(ifilename) as ifile :
+        inputs=yaml.safe_load(ifile)
+
+    petal = int(inputs["petal"])
+    print("Petal:",petal)
+    print("BMR: '{}'".format(inputs['bmr_type']))
 
 
-    ######################################################################
-    ######################################################################
-    ## Inputs
-    ######################################################################
-    ######################################################################
+    # Compute target bmr coords in CS5 from metrology
+    #################################################
+    if inputs["bmr_type"] == "guide_spikes" :
+        target_bmr_CS5_mm  = compute_target_bmr_guide_spikes_coords_mm(petal)
+    elif inputs["bmr_type"]== "light_weight_red_leg" :
+        target_bmr_CS5_mm = compute_target_bmr_light_weight_red_leg_coords_mm(petal)
+    elif inputs["bmr_type"]== "heavy_weight_red_leg" :
+        target_bmr_CS5_mm = compute_target_bmr_heavy_weight_red_leg_coords_mm(petal)
+    else :
+        print('error {} not in ["guide_spikes","light_weight_red_leg","heavy_weight_red_leg"]'.format(inputs["bmr_type"]))
+        sys.exit(2)
+    target_bmr_CS5_inch = target_bmr_CS5_mm/inch2mm
 
+    #################################################
 
-    # Petal Position (Per DESI-3596)
-    petal = 6
-
-    # Which BMR (Ball Mount Refectors) mount plate is used. 3 choices
-    bmr_type = "guide_spikes" # BMR plate mounted on the petal guide spikes for petal insertion procedure
-    #bmr_type = "light_weight_red_leg" # BMR plate mounted at the tip of the red
-    #bmr_type = "heavy_weight_red_leg" # BMR plate mounted at the tip of the red with a weight matching that of a petal
 
     # Input BMR Locations (in CS5, will change input method later)
-    measured_bmr_CS5_inch = np.zeros((3,4))
-    if bmr_type == "heavy_weight_red_leg" :
-        measured_bmr_CS5_inch = np.zeros((3,5))
+    #################################################
 
-    bmr_labels=["B1","B2","B3","B4"]
+    if inputs["bmr_type"] == "heavy_weight_red_leg" :
+        bmr_labels=["B1","B2","B3","B4","B5"]
+    else :
+        bmr_labels=["B1","B2","B3","B4"]
 
-    # petal 0 (test of Van)
-    # measured_bmr_CS5_inch[:,0] = [3.3247, -16.5683, -55.9022]
-    # measured_bmr_CS5_inch[:,1] = [1.7563, -18.9263, -55.9158]
-    # measured_bmr_CS5_inch[:,2] = [-3.5547, -20.3330, -55.9186]
-    # measured_bmr_CS5_inch[:,3] = [-3.1565, -16.5614, -55.9040]
+    number_of_balls=len(bmr_labels)
+    measured_bmr_CS5_inch = np.zeros((3,number_of_balls))
 
-    # petal 6 solidworks test
-    # measured_bmr_CS5_inch[:,0] = [-12.478,11.377,-55.906]
-    # measured_bmr_CS5_inch[:,1] = [-12.595,14.207,-55.916]
-    # measured_bmr_CS5_inch[:,2] = [-9.126,18.467,-55.909]
-    # measured_bmr_CS5_inch[:,3] = [-7.231,15.181,-55.898]
+    print("Input BMR coordinates (inch):")
+    for index,bmr_label in enumerate(bmr_labels) :
+        if bmr_label in inputs :
+            measured_bmr_CS5_inch[:,index] = str2array(inputs[bmr_label])
+            print("{} {}".format(bmr_label,inputs[bmr_label]))
 
-    # petal 6 solidworks test after re-alignement
-    measured_bmr_CS5_inch[:,0] = [-12.373,11.526,-55.892]
-    measured_bmr_CS5_inch[:,1] = [-12.491,14.356,-55.910]
-    measured_bmr_CS5_inch[:,2] = [-9.021,18.616,-55.922]
-    measured_bmr_CS5_inch[:,3] = [-7.126,15.331,-55.905]
-    # this validates the python code for the "guide spike" bmr (tag this v0.1.0)
+    # Input PMA translation axis misalignment params
+    #################################################
+    if not "correct_pma_misalignement" in inputs :
+        print("WARNING no keyword 'correct_pma_misalignement' found")
+        print("I assume you don't want to correct from the PMA translation axis misalignment.")
+        correct_pma_misalignement = False
+    else :
+        val = int(inputs["correct_pma_misalignement"])
+        assert (val in [0,1])
+        correct_pma_misalignement = (val==1)
 
-    correct_pma_misalignement = True # (if True, requires the following 3 measurements)
-    # measurements of changes of PMA translation axis alignment
-    # will measure twice the same fixed point in the PMA
-    # once with carriage engaged as close as possible to focal plane
-    # once with carriage in std retracted rest position
-    measured_pma_partially_engaged_bmr_CS5_inch = np.array([0.,0.,-10])
-    measured_pma_retracted_bmr_CS5_inch = np.array([0.,0.,-150])
-    # z_CS5 of fixed point when PMA fully engaged
-    pma_fully_engaged_bmr_z_CS5_inch = -5. # need to compute this
-
-    ######################################################################
-    ######################################################################
-    ## end of inputs
-    ######################################################################
+    if correct_pma_misalignement :
+        # measurements of changes of PMA translation axis alignment
+        # will measure twice the same fixed point in the PMA
+        # once with carriage engaged as close as possible to focal plane
+        # once with carriage in std retracted rest position
+        measured_pma_partially_engaged_bmr_CS5_inch = str2array(inputs["partially_engaged_pma_coords_inch"])
+        measured_pma_retracted_bmr_CS5_inch = str2array(inputs["retracted_pma_coords_inch"])
+        # z_CS5 of fixed point when PMA fully engaged
+        pma_fully_engaged_bmr_z_CS5_inch = float(inputs["fully_engaged_pma_z_coord_inch"])
+        print("Input PMA translation axis misalignment (inch):")
+        print("  coords when partially engaged:",array2str(measured_pma_partially_engaged_bmr_CS5_inch))
+        print("  coords when retracted        :",array2str(measured_pma_retracted_bmr_CS5_inch))
+        print("  z coord when fully engaged   : {:.3f}".format(pma_fully_engaged_bmr_z_CS5_inch))
     ######################################################################
 
     valid_bmr = (np.sum(measured_bmr_CS5_inch**2,axis=0)>0)
 
-    # Compute target bmr coords in CS5 from metrology
-    #################################################
-    if bmr_type == "guide_spikes" :
-        target_bmr_CS5_mm  = compute_target_bmr_guide_spikes_coords_mm(petal)
-    elif bmr_type== "light_weight_red_leg" :
-        target_bmr_CS5_mm = compute_target_bmr_light_weight_red_leg_coords_mm(petal)
-    elif bmr_type== "heavy_weight_red_leg" :
-        target_bmr_CS5_mm = compute_target_bmr_heavy_weight_red_leg_coords_mm(petal)
-    else :
-        print('error {} not in ["guide_spikes","light_weight_red_leg","heavy_weight_red_leg"]'.format(bmr_type))
-        sys.exit(12)
-    target_bmr_CS5_inch = target_bmr_CS5_mm/inch2mm
-    #################################################
+
 
 
 
@@ -537,7 +548,8 @@ def main() :
 
         dtrans = np.sqrt(correction_when_retracting_pma_inch[0]**2+correction_when_retracting_pma_inch[1]**2)
         angle_deg  = np.arctan(dtrans/correction_when_retracting_pma_inch[2])*180./np.pi
-        print("Apply a correction due to the PMA misalignment of {:.1f} degrees of dx,dy= {:+.3f},{:+.3f} inch".format(angle_deg,
+        print("=================================================")
+        print("Apply correction for PMA misalignment of {:.1f} degrees of dx,dy= {:+.3f},{:+.3f} inch".format(angle_deg,
                                                                                                                    correction_when_retracting_pma_inch[0],correction_when_retracting_pma_inch[1]))
         if len(target_bmr_CS5_inch.shape) == 1 :
             target_bmr_CS5_inch[0:2] += correction_when_retracting_pma_inch[0:2] # change only x and y
@@ -545,10 +557,6 @@ def main() :
             target_bmr_CS5_inch[0:2] += correction_when_retracting_pma_inch[0:2][:,None]
 
     ##############################################################
-
-
-    measured_pma_partially_engaged_bmr_CS5_inch
-
 
 
     target_bmr_PMA_inch   = CS5_to_PMA_inch(target_bmr_CS5_inch)
@@ -570,13 +578,20 @@ def main() :
 
     initial_struts_length_inch = np.sqrt(np.sum((initial_struts_platform_coords_inch - struts_base_coords_inch)**2,axis=0))
 
-    print("BMR '{}'".format(bmr_type))
     print("=================================================")
-    print("Initial struts length (inch) =",array2str(initial_struts_length_inch))
 
     if True :
         # Ignore difference in z
         measured_bmr_PMA_inch[2] += ( np.mean(target_bmr_PMA_inch[2]) - np.mean(measured_bmr_PMA_inch[2]) )
+
+
+    delta_inch = (measured_bmr_PMA_inch-target_bmr_PMA_inch)
+    dr = np.sqrt(delta_inch[0]**2+delta_inch[0]**2)
+    print("BRM offsets (inch) =",array2str(dr))
+    print("BRM offsets (mm)   =",array2str(dr*inch2mm))
+    print("=================================================")
+
+
 
     pma_adjust = Transfo()
     pma_adjust.fit(measured_bmr_PMA_inch[:,valid_bmr],target_bmr_PMA_inch[:,valid_bmr])
@@ -585,6 +600,7 @@ def main() :
     new_struts_platform_coords_inch = pma_adjust.apply(initial_struts_platform_coords_inch)
 
     new_struts_length_inch = np.sqrt(np.sum((new_struts_platform_coords_inch - struts_base_coords_inch)**2,axis=0))
+    print("Initial struts length (inch) =",array2str(initial_struts_length_inch))
     print("New struts length (inch)     =",array2str(new_struts_length_inch))
     strut_deltas_inch = new_struts_length_inch - initial_struts_length_inch
     print("Struts deltas (inch):")
@@ -598,8 +614,8 @@ def main() :
     predicted_new_bmr_PMA_inch = pma_adjust.apply(measured_bmr_PMA_inch)
     dist2_inch = np.sum((predicted_new_bmr_PMA_inch - target_bmr_PMA_inch)**2,axis=0)
 
-    print("BRM fit residuals (inch)     =",array2str(np.sqrt(dist2_inch[valid_bmr])))
-    print("BRM fit residuals (mm)       =",array2str(np.sqrt(dist2_inch[valid_bmr])*inch2mm))
+    #print("BRM fit residuals (inch)     =",array2str(np.sqrt(dist2_inch[valid_bmr])))
+    #print("BRM fit residuals (mm)       =",array2str(np.sqrt(dist2_inch[valid_bmr])*inch2mm))
 
     rms_inch   = np.sqrt(np.mean(dist2_inch[valid_bmr]))
     rms_mm = rms_inch*inch2mm
@@ -610,7 +626,6 @@ def main() :
     else :
         print("(fit rms = {:.3f} mm)".format(rms_mm))
     print("=================================================")
-    print("Do you get this change?")
 
     if plot :
         plt.figure("CS5")
