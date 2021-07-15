@@ -441,6 +441,14 @@ def compute_target_bmr_heavy_weight_red_leg_coords_mm(petal) :
 def main() :
 
 
+    file=open("measurements.csv")
+    vals=file.readlines()
+    file.close()
+    print("read:")
+    print(vals)
+    sys.exit(12)
+
+
     ######################################################################
     ######################################################################
     ## Inputs
