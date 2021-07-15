@@ -40,3 +40,13 @@ B4: -3.1565, -16.5614, -55.9040
 
 
 # Expected output:
+# BRM offsets (inch) = [ 0.061, 0.060, 0.060, 0.060 ]
+# Struts deltas (inch):
+#   S1 -0.019
+#   S2 -0.098
+#   S3 -0.019
+#   S4 -0.056
+#   S5 +0.024
+#   S6 +0.047
+
+# Can be compared with a run of initial_PAC.py which is the code from Van
