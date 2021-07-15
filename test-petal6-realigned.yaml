@@ -8,7 +8,7 @@ petal: 6
 # 3 choices :
 #  "guide_spikes" BMR plate mounted on the petal guide spikes for petal insertion procedure
 #  "light_weight_red_leg" # BMR plate mounted at the tip of the red
-#  ""heavy_weight_red_leg" # BMR plate mounted at the tip of the red with a weight matching that of a petal
+#  "heavy_weight_red_leg" # BMR plate mounted at the tip of the red with a weight matching that of a petal
 
 bmr_type: "guide_spikes"
 
