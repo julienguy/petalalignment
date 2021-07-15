@@ -600,9 +600,9 @@ def main() :
         print("!!! ERROR fit rms = {:.3f} mm !!!".format(rms_mm))
         print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
     else :
-        print("Fit rms = {:.3f} mm".format(rms_mm))
+        print("(fit rms = {:.3f} mm)".format(rms_mm))
     print("=================================================")
-
+    print("Do you get this change?")
 
     if plot :
         plt.figure("CS5")
