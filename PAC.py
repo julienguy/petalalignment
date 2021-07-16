@@ -498,10 +498,15 @@ I will use a default file for now as a code test.
     measured_bmr_CS5_inch = np.zeros((3,number_of_balls))
 
     print("Input BMR coordinates (inch):")
+    valid_bmr = np.repeat(False,number_of_balls)
     for index,bmr_label in enumerate(bmr_labels) :
         if bmr_label in inputs :
             measured_bmr_CS5_inch[:,index] = str2array(inputs[bmr_label])
+            valid_bmr[index]=True
             print("{} {}".format(bmr_label,inputs[bmr_label]))
+        else :
+            print("WARNING: no data for ball '{}'".format(bmr_label))
+            valid_bmr[index]=False
 
     # Input PMA translation axis misalignment params
     #################################################
@@ -528,11 +533,6 @@ I will use a default file for now as a code test.
         print("  coords when retracted        :",array2str(measured_pma_retracted_bmr_CS5_inch))
         print("  z coord when fully engaged   : {:.3f}".format(pma_fully_engaged_bmr_z_CS5_inch))
     ######################################################################
-
-    valid_bmr = (np.sum(measured_bmr_CS5_inch**2,axis=0)>0)
-
-
-
 
 
     # Compute PMA translation correction
@@ -582,13 +582,13 @@ I will use a default file for now as a code test.
 
     if True :
         # Ignore difference in z
-        measured_bmr_PMA_inch[2] += ( np.mean(target_bmr_PMA_inch[2]) - np.mean(measured_bmr_PMA_inch[2]) )
+        measured_bmr_PMA_inch[2,valid_bmr] += ( np.mean(target_bmr_PMA_inch[2,valid_bmr]) - np.mean(measured_bmr_PMA_inch[2,valid_bmr]) )
 
 
     delta_inch = (measured_bmr_PMA_inch-target_bmr_PMA_inch)
     dr = np.sqrt(delta_inch[0]**2+delta_inch[0]**2)
-    print("BRM offsets (inch) =",array2str(dr))
-    print("BRM offsets (mm)   =",array2str(dr*inch2mm))
+    print("BMR offsets (inch) =",array2str(dr[valid_bmr]))
+    print("BMR offsets (mm)   =",array2str(dr[valid_bmr]*inch2mm))
     print("=================================================")
 
 
@@ -614,8 +614,8 @@ I will use a default file for now as a code test.
     predicted_new_bmr_PMA_inch = pma_adjust.apply(measured_bmr_PMA_inch)
     dist2_inch = np.sum((predicted_new_bmr_PMA_inch - target_bmr_PMA_inch)**2,axis=0)
 
-    #print("BRM fit residuals (inch)     =",array2str(np.sqrt(dist2_inch[valid_bmr])))
-    #print("BRM fit residuals (mm)       =",array2str(np.sqrt(dist2_inch[valid_bmr])*inch2mm))
+    #print("BMR fit residuals (inch)     =",array2str(np.sqrt(dist2_inch[valid_bmr])))
+    #print("BMR fit residuals (mm)       =",array2str(np.sqrt(dist2_inch[valid_bmr])*inch2mm))
 
     rms_inch   = np.sqrt(np.mean(dist2_inch[valid_bmr]))
     rms_mm = rms_inch*inch2mm
@@ -634,7 +634,7 @@ I will use a default file for now as a code test.
         xyz    = measured_bmr_CS5_inch*inch2mm
         for b in range(measured_bmr_CS5_inch.shape[1]) :
             if not valid_bmr[b]:
-                print("ball {} has not valid data".format(bmr_labels[b]))
+                #print("ball {} has no valid data".format(bmr_labels[b]))
                 continue
             plt.plot(xyz[0,b],xyz[1,b],"o",color="k",alpha=0.5)
             plt.text(xyz[0,b]+10,xyz[1,b]+10,bmr_labels[b],color="k")
@@ -685,7 +685,7 @@ I will use a default file for now as a code test.
 
             # bmr
             xyz=xyz2plot(measured_bmr_PMA_inch)
-            ax.scatter3D(xyz[0],xyz[1],xyz[2],color="green",label="measured BMR")
+            ax.scatter3D(xyz[0,valid_bmr],xyz[1,valid_bmr],xyz[2,valid_bmr],color="green",label="measured BMR")
             xyz=xyz2plot(target_bmr_PMA_inch)
             ax.scatter3D(xyz[0],xyz[1],xyz[2],color="blue",label="target BMR")
             for b in range(4) :
