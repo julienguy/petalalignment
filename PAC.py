@@ -204,6 +204,11 @@ class Transfo() :
             self.targetvec = params_direct[0:3]
             self.transvec  = params_direct[3:6]
 
+        # compute rms distance
+        transformed_xyz = self.apply(input_xyz)
+        rms = np.sqrt(np.sum((target_xyz-transformed_xyz)**2)/target_xyz.shape[1])
+        return rms
+
 ######################################################################
 
 def get_target_bmr_guide_spikes_in_GS1_inch() :
@@ -296,6 +301,7 @@ def get_red_leg_mount_holes_in_CS5_mm(petal) :
             if p == petal :
                 alpha = 1
             else :
+                continue
                 alpha = 0.1
             plt.plot(holes[0,0],holes[1,0],"o",color="b",alpha=alpha)
             plt.plot(holes[0,1],holes[1,1],"o",color="g",alpha=alpha)
@@ -323,8 +329,15 @@ def compute_target_bmr_light_weight_red_leg_coords_mm(petal) :
 
     red_leg_mount_holes_CS5_mm  = get_red_leg_mount_holes_in_CS5_mm(petal)
     red_leg_mount_holes_6206_mm = get_red_leg_mount_holes_in_6206_mm()
+    # set same z
+    red_leg_mount_holes_6206_mm[2] += np.mean(red_leg_mount_holes_CS5_mm[2]-red_leg_mount_holes_6206_mm[2])
     C6206_to_CS5 = Transfo()
-    C6206_to_CS5.fit(red_leg_mount_holes_6206_mm,red_leg_mount_holes_CS5_mm)
+    rms = C6206_to_CS5.fit(red_leg_mount_holes_6206_mm,red_leg_mount_holes_CS5_mm)
+    if rms > 1. : # mm
+        print("ERROR rms(6206->CS5) ={:.2f} mmm".format(rms))
+    else :
+        print("INFO rms(6206->CS5) ={:.2f} mmm".format(rms))
+
 
     # BMR (Ball Mount Refectors) Locations
     # from DESI-6207 'leg Laser Target Mount metrology'
@@ -356,6 +369,8 @@ def compute_target_bmr_light_weight_red_leg_coords_mm(petal) :
         plt.plot(red_leg_mount_holes_CS5_mm[0,1],red_leg_mount_holes_CS5_mm[1,1],"o",color="g",label="hole2")
         plt.plot(red_leg_mount_holes_CS5_mm[0,2],red_leg_mount_holes_CS5_mm[1,2],"o",color="r",label="hole3")
         plt.plot(bmr_CS5_mm[0],bmr_CS5_mm[1],"o",markersize=12,label="bmr")
+        #for b in range(bmr_CS5_mm.shape[1]) :
+        #    plt.text(bmr_CS5_mm[0,b],bmr_CS5_mm[1,b],str(b+1))
         xyz_CS5 = C6206_to_CS5.apply(xyz_6206)
         plt.plot(xyz_CS5[0,0],xyz_CS5[1,0],"X",color="gray",label="A")
         plt.plot(xyz_CS5[0,1],xyz_CS5[1,1],".",color="gray")
@@ -369,7 +384,9 @@ def compute_target_bmr_light_weight_red_leg_coords_mm(petal) :
         plt.plot(red_leg_mount_holes_6206_mm[0,1],red_leg_mount_holes_6206_mm[1,1],"o",color="g",label="hole2")
         plt.plot(red_leg_mount_holes_6206_mm[0,2],red_leg_mount_holes_6206_mm[1,2],"o",color="r",label="hole3")
 
-        plt.plot(bmr_6206_mm[0],bmr_6206_mm[1],"o",markersize=12,label="bmr")
+        plt.plot(bmr_6206_mm[0],bmr_6206_mm[1],"o",markersize=12,label="bmr",color="C0")
+        for b in range(bmr_6206_mm.shape[1]) :
+            plt.text(bmr_6206_mm[0,b],bmr_6206_mm[1,b],str(b+1),color="C0")
         plt.plot(xyz_6206[0,0],xyz_6206[1,0],"X",color="gray",label="A")
         plt.plot(xyz_6206[0,1],xyz_6206[1,1],".",color="gray")
         plt.gca().set_aspect('equal', adjustable='box')
@@ -383,8 +400,14 @@ def compute_target_bmr_heavy_weight_red_leg_coords_mm(petal) :
 
     red_leg_mount_holes_CS5_mm  = get_red_leg_mount_holes_in_CS5_mm(petal)
     red_leg_mount_holes_6206_mm = get_red_leg_mount_holes_in_6206_mm()
+    red_leg_mount_holes_6206_mm[2] += np.mean(red_leg_mount_holes_CS5_mm[2]-red_leg_mount_holes_6206_mm[2])
     C6206_to_CS5 = Transfo()
-    C6206_to_CS5.fit(red_leg_mount_holes_6206_mm,red_leg_mount_holes_CS5_mm)
+    rms =  C6206_to_CS5.fit(red_leg_mount_holes_6206_mm,red_leg_mount_holes_CS5_mm)
+    rms = C6206_to_CS5.fit(red_leg_mount_holes_6206_mm,red_leg_mount_holes_CS5_mm)
+    if rms > 1. : # mm
+        print("ERROR rms(6206->CS5) ={:.2f} mmm".format(rms))
+    else :
+        print("INFO rms(6206->CS5) ={:.2f} mmm".format(rms))
 
     # BMR (Ball Mount Refectors) Locations
     # from DESI-6211 'FPP Mass Dummy Endplate metrology'
@@ -588,12 +611,12 @@ I will use a default file for now as a code test.
     delta_inch = (measured_bmr_PMA_inch-target_bmr_PMA_inch)
     dr_inch = np.sqrt(delta_inch[0]**2+delta_inch[1]**2)
     print("BMR offsets (sqrt(dx2+dy2), inch) =",array2str(dr_inch[valid_bmr]))
-    print("BMR mean offset dx = {:.3f} inch".format(np.mean(delta_inch[0][valid_bmr])))
-    print("BMR mean offset dy = {:.3f} inch".format(np.mean(delta_inch[1][valid_bmr])))
+    print("BMR mean offset dx = {:+.3f} inch".format(np.mean(delta_inch[0][valid_bmr])))
+    print("BMR mean offset dy = {:+.3f} inch".format(np.mean(delta_inch[1][valid_bmr])))
     print("")
     print("BMR offsets (sqrt(dx2+dy2), mm)   =",array2str(dr_inch[valid_bmr]*inch2mm))
-    print("BMR mean offset dx = {:.3f} mm".format(np.mean(delta_inch[0][valid_bmr])*inch2mm))
-    print("BMR mean offset dy = {:.3f} mm".format(np.mean(delta_inch[1][valid_bmr])*inch2mm))
+    print("BMR mean offset dx = {:+.3f} mm".format(np.mean(delta_inch[0][valid_bmr])*inch2mm))
+    print("BMR mean offset dy = {:+.3f} mm".format(np.mean(delta_inch[1][valid_bmr])*inch2mm))
     print("=================================================")
 
 
