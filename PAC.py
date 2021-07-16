@@ -586,9 +586,14 @@ I will use a default file for now as a code test.
 
 
     delta_inch = (measured_bmr_PMA_inch-target_bmr_PMA_inch)
-    dr = np.sqrt(delta_inch[0]**2+delta_inch[0]**2)
-    print("BMR offsets (inch) =",array2str(dr[valid_bmr]))
-    print("BMR offsets (mm)   =",array2str(dr[valid_bmr]*inch2mm))
+    dr_inch = np.sqrt(delta_inch[0]**2+delta_inch[1]**2)
+    print("BMR offsets (sqrt(dx2+dy2), inch) =",array2str(dr_inch[valid_bmr]))
+    print("BMR mean offset dx = {:.3f} inch".format(np.mean(delta_inch[0][valid_bmr])))
+    print("BMR mean offset dy = {:.3f} inch".format(np.mean(delta_inch[1][valid_bmr])))
+    print("")
+    print("BMR offsets (sqrt(dx2+dy2), mm)   =",array2str(dr_inch[valid_bmr]*inch2mm))
+    print("BMR mean offset dx = {:.3f} mm".format(np.mean(delta_inch[0][valid_bmr])*inch2mm))
+    print("BMR mean offset dy = {:.3f} mm".format(np.mean(delta_inch[1][valid_bmr])*inch2mm))
     print("=================================================")
 
 
