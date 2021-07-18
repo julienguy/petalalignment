@@ -74,17 +74,22 @@ class Transfo3D() :
         params_direct = fits.x
         chi2_direct = chi2(params_direct,input_xyz,target_xyz)
 
-        self.mirror = True
-        fits = opt.minimize(chi2, [0, 0, 1, diff[0], diff[1], diff[2]],
-                            args = (input_xyz,target_xyz))
-        params_mirror = fits.x
-        chi2_mirror = chi2(params_mirror,input_xyz,target_xyz)
+        test_mirror = True
 
-        if chi2_mirror < chi2_direct :
+        if test_mirror :
             self.mirror = True
-            setparams(params_mirror)
+            fits = opt.minimize(chi2, [0, 0, 1, diff[0], diff[1], diff[2]],
+                                args = (input_xyz,target_xyz))
+            params_mirror = fits.x
+            chi2_mirror = chi2(params_mirror,input_xyz,target_xyz)
+
+            if chi2_mirror < chi2_direct :
+                self.mirror = True
+                setparams(params_mirror)
+            else :
+                self.mirror = False
+                setparams(params_direct)
         else :
-            self.mirror = False
             setparams(params_direct)
 
         # compute rms distance
@@ -92,6 +97,12 @@ class Transfo3D() :
         rms = np.sqrt(np.sum((target_xyz-transformed_xyz)**2)/target_xyz.shape[1])
         return rms
 
+    def __str__(self) :
+        r2d=180/np.pi
+        line="Transfo3D: rotation angles x={:.1f} y={:.1f} z={:.1f} deg\n".format(r2d*self.ax,r2d*self.ay,r2d*self.az)
+        line+="Transfo3D: translation dx={:.3f} dy={:.3f} dz={:.3f}\n".format(self.t[0],self.t[1],self.t[2])
+        line+="Transfo3D: mirror = {}".format(self.mirror)
+        return line
 
 class Transfo2D() :
     '''
