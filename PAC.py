@@ -7,9 +7,12 @@ import scipy.optimize as opt
 import matplotlib.pyplot as plt
 import yaml
 
+from transfo import Transfo3D as Transfo
+
 inch2mm = 25.4
 ######################################################################
 plot  = True
+debug = False
 ######################################################################
 
 def CS5_to_PMA_inch(xyz) :
@@ -125,89 +128,7 @@ def array2str(x) :
         line += " {:.3f}".format(ix)
     line += " ]"
     return line
-class Transfo() :
-    '''
-    Function to minimize when best fitting the transform matrix between input
-    BMR locations and target BMR locations.
 
-    mat: 1x6 Numpy array, with the first 3 values being a target rotation vector
-    and the last 3 values a translation vector
-
-    inputs: 3xN Numpy array containing measured BMR locations, where N is the
-    number of Bmr
-
-    targets: 3xN Numpy array containing target BMR locations
-    '''
-
-    # rotation then translation
-    def __init__(self) :
-        self.mirror    = False
-        self.startvec  = np.array([0, 0, 1])
-        self.targetvec = np.array([0, 0, 1])
-        self.transvec  = np.zeros(3)
-
-    def rotmat3d(self,vec1, vec2):
-        a, b = (vec1 / np.linalg.norm(vec1)).reshape(3), (vec2 / np.linalg.norm(vec2)).reshape(3)
-        v = np.cross(a, b)
-        c = np.dot(a, b)
-        s = np.linalg.norm(v)
-        kmat = np.array([[0, -v[2], v[1]], [v[2], 0, -v[0]], [-v[1], v[0], 0]])
-        if s == 0:
-            rotation_matrix = np.eye(3)
-        else:
-            rotation_matrix = np.eye(3) + kmat + kmat.dot(kmat) * ((1 - c) / (s ** 2))
-        return rotation_matrix
-
-    def rotmat(self) :
-        return self.rotmat3d(self.startvec,self.targetvec)
-
-    def apply(self,xyz) :
-
-        xyz = np.atleast_1d(xyz)
-        assert(xyz.shape[0]==3)
-        res = self.rotmat().dot(xyz)
-        if self.mirror :
-            res[0] *= -1
-        if len(xyz.shape)==1 :
-            res += self.transvec
-        else :
-            res += self.transvec[:,None]
-        return res
-
-    def fit(self,input_xyz,target_xyz) :
-
-        def chi2(params, input_xyz, target_xyz) :
-            self.targetvec = params[0:3]
-            self.transvec  = params[3:6]
-            transformed_xyz = self.apply(input_xyz)
-
-            return np.sum ( (target_xyz-transformed_xyz)**2 )
-
-        self.mirror = False
-        fits = opt.minimize(chi2, [0, 0, 1, 0, 0, 0],
-                               args = (input_xyz,target_xyz))
-        params_direct = fits.x
-        chi2_direct = chi2(params_direct,input_xyz,target_xyz)
-
-        self.mirror = True
-        fits = opt.minimize(chi2, [0, 0, 1, 0, 0, 0],
-                               args = (input_xyz,target_xyz))
-        params_mirror = fits.x
-        chi2_mirror = chi2(params_mirror,input_xyz,target_xyz)
-
-        if chi2_mirror < chi2_direct :
-            self.mirror = True
-            self.targetvec = params_mirror[0:3]
-            self.transvec  = params_mirror[3:6]
-        else :
-            self.mirror = False
-            self.targetvec = params_direct[0:3]
-            self.transvec  = params_direct[3:6]
-
-        # compute rms distance
-        transformed_xyz = self.apply(input_xyz)
-        rms = np.sqrt(np.sum((target_xyz-transformed_xyz)**2)/target_xyz.shape[1])
-        return rms
 
 ######################################################################
 
@@ -308,7 +229,12 @@ def get_red_leg_mount_holes_in_CS5_mm(petal) :
             plt.plot(holes[0,2],holes[1,2],"o",color="r",alpha=alpha)
             plt.gca().set_aspect('equal', adjustable='box')
 
-    return holes_coords_CS5_mm[petal].reshape(3,3).T
+    xyz = holes_coords_CS5_mm[petal].reshape(3,3).T
+    if debug :
+        for p in range(xyz.shape[1]) :
+            print("DEBUG Red Leg Hole {} xyz (mm) = {}".format(p+1,xyz[:,p]))
+
+    return xyz
 
 
 def get_red_leg_mount_holes_in_6206_mm() :
@@ -334,10 +260,9 @@ def compute_target_bmr_light_weight_red_leg_coords_mm(petal) :
     C6206_to_CS5 = Transfo()
     rms = C6206_to_CS5.fit(red_leg_mount_holes_6206_mm,red_leg_mount_holes_CS5_mm)
     if rms > 1. : # mm
-        print("ERROR rms(6206->CS5) ={:.2f} mmm".format(rms))
-    else :
-        print("INFO rms(6206->CS5) ={:.2f} mmm".format(rms))
-
+        print("ERROR rms(6206->CS5) ={:.3f} mmm".format(rms))
+    elif debug :
+        print("DEBUG rms(6206->CS5) ={:.3f} mmm".format(rms))
 
     # BMR (Ball Mount Refectors) Locations
     # from DESI-6207 'leg Laser Target Mount metrology'
@@ -357,7 +282,8 @@ def compute_target_bmr_light_weight_red_leg_coords_mm(petal) :
     xyz_6206 = np.array([ [0,0,0] , [-50,0,0] ]).T
     xyz_6207 = np.array([ [0,0,0] , [50,0,0] ]).T
     C6207_to_C6206 = Transfo()
-    C6207_to_C6206.fit(xyz_6207,xyz_6206)
+    rms=C6207_to_C6206.fit(xyz_6207,xyz_6206)
+    if debug : print("DEBUG rms(6207->6206) ={:.3f} mmm".format(rms))
 
     bmr_6206_mm = C6207_to_C6206.apply(bmr_6207_mm)
     bmr_CS5_mm  = C6206_to_CS5.apply(bmr_6206_mm)
@@ -405,9 +331,9 @@ def compute_target_bmr_heavy_weight_red_leg_coords_mm(petal) :
     rms =  C6206_to_CS5.fit(red_leg_mount_holes_6206_mm,red_leg_mount_holes_CS5_mm)
     rms = C6206_to_CS5.fit(red_leg_mount_holes_6206_mm,red_leg_mount_holes_CS5_mm)
     if rms > 1. : # mm
-        print("ERROR rms(6206->CS5) ={:.2f} mmm".format(rms))
+        print("ERROR rms(6206->CS5) = {:.2f} mmm".format(rms))
     else :
-        print("INFO rms(6206->CS5) ={:.2f} mmm".format(rms))
+        print("INFO rms(6206->CS5) = {:.2f} mmm".format(rms))
 
     # BMR (Ball Mount Refectors) Locations
     # from DESI-6211 'FPP Mass Dummy Endplate metrology'
@@ -426,7 +352,8 @@ def compute_target_bmr_heavy_weight_red_leg_coords_mm(petal) :
     xyz_6206 = np.array([ [0,0,0] , [-50,0,0] ]).T
     xyz_6211 = np.array([ [0,50,0] , [0,0,0] ]).T
     C6211_to_C6206 = Transfo()
-    C6211_to_C6206.fit(xyz_6211,xyz_6206)
+    rms = C6211_to_C6206.fit(xyz_6211,xyz_6206)
+    print("DEBUG rms(6211->6206) = {:.2f} mmm".format(rms))
 
     bmr_6206_mm = C6211_to_C6206.apply(bmr_6211_mm)
     bmr_CS5_mm  = C6206_to_CS5.apply(bmr_6206_mm)
@@ -607,19 +534,22 @@ I will use a default file for now as a code test.
         # Ignore difference in z
         measured_bmr_PMA_inch[2,valid_bmr] += ( np.mean(target_bmr_PMA_inch[2,valid_bmr]) - np.mean(measured_bmr_PMA_inch[2,valid_bmr]) )
 
+    delta_inch_CS5 = (measured_bmr_CS5_inch-target_bmr_CS5_inch)
+    dr_inch_CS5 = np.sqrt(delta_inch_CS5[0]**2+delta_inch_CS5[1]**2)
+    #print("BMR offsets (sqrt(dx2+dy2), inch) =",array2str(dr_inch_CS5[valid_bmr]))
+    #print("BMR mean offset dx (CS5) = {:+.3f} inch".format(np.mean(delta_inch_CS5[0][valid_bmr])))
+    #print("BMR mean offset dy (CS5)  = {:+.3f} inch".format(np.mean(delta_inch_CS5[1][valid_bmr])))
 
-    delta_inch = (measured_bmr_PMA_inch-target_bmr_PMA_inch)
-    dr_inch = np.sqrt(delta_inch[0]**2+delta_inch[1]**2)
-    print("BMR offsets (sqrt(dx2+dy2), inch) =",array2str(dr_inch[valid_bmr]))
-    print("BMR mean offset dx = {:+.3f} inch".format(np.mean(delta_inch[0][valid_bmr])))
-    print("BMR mean offset dy = {:+.3f} inch".format(np.mean(delta_inch[1][valid_bmr])))
-    print("")
-    print("BMR offsets (sqrt(dx2+dy2), mm)   =",array2str(dr_inch[valid_bmr]*inch2mm))
-    print("BMR mean offset dx = {:+.3f} mm".format(np.mean(delta_inch[0][valid_bmr])*inch2mm))
-    print("BMR mean offset dy = {:+.3f} mm".format(np.mean(delta_inch[1][valid_bmr])*inch2mm))
+    print("BMR offsets (sqrt(dx2+dy2), mm)   =",array2str(dr_inch_CS5[valid_bmr]*inch2mm))
+    print("BMR mean offset dx (CS5)  = {:+.3f} mm".format(np.mean(delta_inch_CS5[0][valid_bmr])*inch2mm))
+    print("BMR mean offset dy (CS5)  = {:+.3f} mm".format(np.mean(delta_inch_CS5[1][valid_bmr])*inch2mm))
+
+    delta_inch_PMA = (measured_bmr_PMA_inch-target_bmr_PMA_inch)
+    print("BMR mean offset dx (PMA)  = {:+.3f} mm".format(np.mean(delta_inch_PMA[0][valid_bmr])*inch2mm))
+    print("BMR mean offset dy (PMA)  = {:+.3f} mm".format(np.mean(delta_inch_PMA[1][valid_bmr])*inch2mm))
+    #print("BMR mean offset dx (PMA) = {:+.3f} inch".format(np.mean(delta_inch[0][valid_bmr])))
+    #print("BMR mean offset dy (PMA)  = {:+.3f} inch".format(np.mean(delta_inch[1][valid_bmr])))
     print("=================================================")
-
-
 
     pma_adjust = Transfo()
     pma_adjust.fit(measured_bmr_PMA_inch[:,valid_bmr],target_bmr_PMA_inch[:,valid_bmr])
