@@ -331,9 +331,9 @@ def compute_target_bmr_heavy_weight_red_leg_coords_mm(petal) :
     rms =  C6206_to_CS5.fit(red_leg_mount_holes_6206_mm,red_leg_mount_holes_CS5_mm)
     rms = C6206_to_CS5.fit(red_leg_mount_holes_6206_mm,red_leg_mount_holes_CS5_mm)
     if rms > 1. : # mm
-        print("ERROR rms(6206->CS5) = {:.2f} mmm".format(rms))
-    else :
-        print("INFO rms(6206->CS5) = {:.2f} mmm".format(rms))
+        print("ERROR rms(6206->CS5) = {:.3f} mmm".format(rms))
+    elif debug :
+        print("DEBUG rms(6206->CS5) = {:.3f} mmm".format(rms))
 
     # BMR (Ball Mount Refectors) Locations
     # from DESI-6211 'FPP Mass Dummy Endplate metrology'
@@ -353,7 +353,7 @@ def compute_target_bmr_heavy_weight_red_leg_coords_mm(petal) :
     xyz_6211 = np.array([ [0,50,0] , [0,0,0] ]).T
     C6211_to_C6206 = Transfo()
     rms = C6211_to_C6206.fit(xyz_6211,xyz_6206)
-    print("DEBUG rms(6211->6206) = {:.2f} mmm".format(rms))
+    if debug: print("DEBUG rms(6211->6206) = {:.3f} mmm".format(rms))
 
     bmr_6206_mm = C6211_to_C6206.apply(bmr_6211_mm)
     bmr_CS5_mm  = C6206_to_CS5.apply(bmr_6206_mm)
