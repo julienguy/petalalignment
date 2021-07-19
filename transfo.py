@@ -1,5 +1,7 @@
 import numpy as np
 import scipy.optimize as opt
+import json
+import yaml
 
 class Transfo3D() :
     '''
@@ -104,6 +106,75 @@ class Transfo3D() :
         line+="Transfo3D: mirror = {}".format(self.mirror)
         return line
 
+    @classmethod
+    def read_dict(cls,params):
+        tx = cls()
+        tx.ax    = params['ax']
+        tx.ay    = params['ay']
+        tx.az    = params['az']
+        tx.t[0]    = params['dx']
+        tx.t[1]    = params['dy']
+        tx.t[2]    = params['dz']
+        tx.mirror= params['mirror']
+        return tx
+
+    def write_dict(self):
+        params = dict()
+        params['ax'] = float(self.ax)
+        params['ay'] = float(self.ay)
+        params['az'] = float(self.az)
+        params['dx'] = float(self.t[0])
+        params['dy'] = float(self.t[1])
+        params['dz'] = float(self.t[2])
+        params['mirror'] = bool(self.mirror)
+        return params
+
+    @classmethod
+    def read_json(cls,filename):
+        import json
+        with open(filename) as fx:
+            s = fx.read()
+        tx = cls()
+        params  = json.loads(s)
+        return cls.read_dict(params)
+
+    @classmethod
+    def read_yaml(cls,filename):
+        import yaml
+        with open(filename) as fx:
+            s = fx.read()
+        params  = yaml.safe_load(s)
+        return cls.read_dict(params)
+
+    @classmethod
+    def read(cls,filename):
+        if filename.endswith("yaml"):
+            return cls.read_yaml(filename)
+        elif filename.endswith("json"):
+            return cls.read_json(filename)
+        else :
+            raise IOError("Cannot write transfo to '{}'. Only yaml or json are supported.".format(filename))
+
+    def write_json(self, filename):
+        import json
+        params = self.write_dict()
+        with open(filename, 'w') as fx:
+            fx.write(json.dumps(params))
+
+    def write_yaml(self, filename):
+        import yaml
+        params = self.write_dict()
+        with open(filename, 'w') as fx:
+            fx.write(yaml.dump(params))
+
+    def write(self, filename):
+        if filename.endswith("yaml"):
+            self.write_yaml(filename)
+        elif filename.endswith("json"):
+            self.write_json(filename)
+        else :
+            raise IOError("Cannot write transfo to '{}'. Only yaml or json are supported.".format(filename))
+
 class Transfo2D() :
     '''
     Function to minimize when best fitting the transform matrix between input
@@ -122,7 +193,7 @@ class Transfo2D() :
     def __init__(self) :
         self.mirror    = False
         self.angle = 0
-        self.transvec  = np.zeros(3)
+        self.t  = np.zeros(3)
 
     def rotmat(self) :
         ca=np.cos(self.angle)
@@ -137,16 +208,16 @@ class Transfo2D() :
         if self.mirror :
             res[0] *= -1
         if len(xyz.shape)==1 :
-            res += self.transvec
+            res += self.t
         else :
-            res += self.transvec[:,None]
+            res += self.t[:,None]
         return res
 
     def fit(self,input_xyz,target_xyz) :
 
         def chi2(params, input_xyz, target_xyz) :
             self.angle = params[0]
-            self.transvec[:2]  = params[1:3]
+            self.t[:2]  = params[1:3]
             transformed_xyz = self.apply(input_xyz)
             return np.sum ( (target_xyz-transformed_xyz)**2 )
 
@@ -165,16 +236,87 @@ class Transfo2D() :
         if chi2_mirror < chi2_direct :
             self.mirror = True
             self.angle = params_mirror[0]
-            self.transvec[:2]  = params_mirror[1:3]
+            self.t[:2]  = params_mirror[1:3]
         else :
             self.mirror = False
             self.angle = params_direct[0]
-            self.transvec[:2]  = params_direct[1:3]
+            self.t[:2]  = params_direct[1:3]
 
         # compute rms distance
         transformed_xyz = self.apply(input_xyz)
         rms = np.sqrt(np.sum((target_xyz-transformed_xyz)**2)/target_xyz.shape[1])
         return rms
+
+    def __str__(self) :
+        r2d=180/np.pi
+        line="Transfo2D: rotation angle (z) = {:.1f} deg\n".format(r2d*self.angle)
+        line+="Transfo2D: translation dx={:.3f} dy={:.3f}\n".format(self.t[0],self.t[1])
+        line+="Transfo2D: mirror = {}".format(self.mirror)
+        return line
+
+    @classmethod
+    def read_dict(cls,params):
+        tx = cls()
+        tx.angle = params['a']
+        tx.t[0] = params['dx']
+        tx.t[1] = params['dy']
+        tx.t[2] = 0
+        tx.mirror = params['mirror']
+        return tx
+
+    def write_dict(self):
+        params = dict()
+        params['a'] = float(self.angle)
+        params['dx'] = float(self.t[0])
+        params['dy'] = float(self.t[1])
+        params['mirror'] = bool(self.mirror)
+        return params
+
+    @classmethod
+    def read_json(cls,filename):
+        import json
+        with open(filename) as fx:
+            s = fx.read()
+        tx = cls()
+        params  = json.loads(s)
+        return cls.read_dict(params)
+
+    @classmethod
+    def read_yaml(cls,filename):
+        import yaml
+        with open(filename) as fx:
+            s = fx.read()
+        params  = yaml.safe_load(s)
+        return cls.read_dict(params)
+
+    @classmethod
+    def read(cls,filename):
+        if filename.endswith("yaml"):
+            return cls.read_yaml(filename)
+        elif filename.endswith("json"):
+            return cls.read_json(filename)
+        else :
+            raise IOError("Cannot write transfo to '{}'. Only yaml or json are supported.".format(filename))
+
+    def write_json(self, filename):
+        import json
+        params = self.write_dict()
+        with open(filename, 'w') as fx:
+            fx.write(json.dumps(params))
+
+    def write_yaml(self, filename):
+        import yaml
+        params = self.write_dict()
+        with open(filename, 'w') as fx:
+            fx.write(yaml.dump(params))
+
+    def write(self, filename):
+        if filename.endswith("yaml"):
+            self.write_yaml(filename)
+        elif filename.endswith("json"):
+            self.write_json(filename)
+        else :
+            raise IOError("Cannot write transfo to '{}'. Only yaml or json are supported.".format(filename))
 
 class OldTransfo3D() :
     '''
