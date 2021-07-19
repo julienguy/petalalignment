@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import yaml
 
 from transfo import Transfo3D as Transfo
+#from transfo import Transfo2D as Transfo
 
 inch2mm = 25.4
 ######################################################################
@@ -553,6 +554,8 @@ I will use a default file for now as a code test.
 
     pma_adjust = Transfo()
     pma_adjust.fit(measured_bmr_PMA_inch[:,valid_bmr],target_bmr_PMA_inch[:,valid_bmr])
+    #pma_adjust.write("transfo.json")
+    pma_adjust.write("transfo.yaml")
 
 
     new_struts_platform_coords_inch = pma_adjust.apply(initial_struts_platform_coords_inch)
