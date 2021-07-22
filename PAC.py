@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import yaml
 
 from transfo import Transfo3D as Transfo
+from transfo import Transfo3D,OldTransfo3D,Transfo2D
 #from transfo import Transfo2D as Transfo
 
 inch2mm = 25.4
@@ -16,7 +17,7 @@ plot  = True
 debug = False
 ######################################################################
 
-def CS5_to_PMA_inch(xyz) :
+def CS5_to_PMA_inch(xyz,carriage_z) :
     """
     Transform coordinates from CS5 to PMA
     Input :
@@ -33,7 +34,8 @@ def CS5_to_PMA_inch(xyz) :
                          [np.sin(CS5toPMA_Clocking), np.cos(CS5toPMA_Clocking), 0],
                          [0, 0, 1]])
 
-    CS5toPMA_translate = np.array([0, 0, 115.8456])
+    # NOTE THE Z VALUE IS ARBITRARY AND SHOULD BE ADJUSTED
+    CS5toPMA_translate = np.array([0,54.15395102,-carriage_z])
 
     res = np.dot(CS5toPMA, xyz)
     if len(res.shape)==1 :
@@ -220,6 +222,9 @@ def get_red_leg_mount_holes_in_CS5_mm(petal) :
         plt.figure("CS5")
         for p in range(10) :
             holes = holes_coords_CS5_mm[p].reshape(3,3).T
+
+            holes[2] -= (55.-2.49)*inch2mm # offset in z_CS5 HACK HERE
+
             if p == petal :
                 alpha = 1
             else :
@@ -328,7 +333,7 @@ def compute_target_bmr_heavy_weight_red_leg_coords_mm(petal) :
 
     red_leg_mount_holes_CS5_mm  = get_red_leg_mount_holes_in_CS5_mm(petal)
     red_leg_mount_holes_6206_mm = get_red_leg_mount_holes_in_6206_mm()
-    red_leg_mount_holes_6206_mm[2] += np.mean(red_leg_mount_holes_CS5_mm[2]-red_leg_mount_holes_6206_mm[2])
+    #red_leg_mount_holes_6206_mm[2] += np.mean(red_leg_mount_holes_CS5_mm[2]-red_leg_mount_holes_6206_mm[2])
     C6206_to_CS5 = Transfo()
     rms =  C6206_to_CS5.fit(red_leg_mount_holes_6206_mm,red_leg_mount_holes_CS5_mm)
     rms = C6206_to_CS5.fit(red_leg_mount_holes_6206_mm,red_leg_mount_holes_CS5_mm)
@@ -389,7 +394,30 @@ def compute_target_bmr_heavy_weight_red_leg_coords_mm(petal) :
             plt.xlabel("X_DESI-6206 (mm)")
             plt.ylabel("Y_DESI-6206 (mm)")
 
-    return bmr_CS5_mm
+    z_pma_inch = 35.397+15.04
+    z_pma_mm   = z_pma_inch*inch2mm
+
+    return bmr_CS5_mm , z_pma_mm
+
+def get_lower_struts_cs5_inch():
+    strut_base_xyz_cs5_inch = np.zeros((3,6),dtype=float)
+    strut_plateform_xyz_cs5_inch = np.zeros((3,6),dtype=float)
+
+    strut_base_xyz_cs5_inch[:,0]=[ 37.734, 78.241, 8.322 ]
+    strut_base_xyz_cs5_inch[:,1]=[ 78.567, 37.050, 8.322 ]
+    strut_base_xyz_cs5_inch[:,2]=[ 58.151, 57.645, -106.679 ]
+    strut_base_xyz_cs5_inch[:,3]=[ 22.999, 63.633, -44.673 ]
+    strut_base_xyz_cs5_inch[:,4]=[ 63.831, 22.442, -44.673 ]
+    strut_base_xyz_cs5_inch[:,5]=[ 24.786, 62.589, -109.214 ]
+    strut_plateform_xyz_cs5_inch[:,0]=[ 23.369, 64.001, 5.785 ]
+    strut_plateform_xyz_cs5_inch[:,1]=[ 64.202, 22.810, 5.785 ]
+    strut_plateform_xyz_cs5_inch[:,2]=[ 43.786, 43.405, -109.215 ]
+    strut_plateform_xyz_cs5_inch[:,3]=[ 24.790, 65.409, -64.902 ]
+    strut_plateform_xyz_cs5_inch[:,4]=[ 65.623, 24.218, -64.902 ]
+    strut_plateform_xyz_cs5_inch[:,5]=[ 39.129, 48.102, -109.215 ]
+
+    return strut_base_xyz_cs5_inch , strut_plateform_xyz_cs5_inch
+
 
 
 def str2array(vals) :
@@ -426,11 +454,11 @@ I will use a default file for now as a code test.
     # Compute target bmr coords in CS5 from metrology
     #################################################
     if inputs["bmr_type"] == "guide_spikes" :
-        target_bmr_CS5_mm  = compute_target_bmr_guide_spikes_coords_mm(petal)
+        target_bmr_CS5_mm , target_bmr_z_pma_mm  = compute_target_bmr_guide_spikes_coords_mm(petal)
     elif inputs["bmr_type"]== "light_weight_red_leg" :
-        target_bmr_CS5_mm = compute_target_bmr_light_weight_red_leg_coords_mm(petal)
+        target_bmr_CS5_mm , target_bmr_z_pma_mm = compute_target_bmr_light_weight_red_leg_coords_mm(petal)
     elif inputs["bmr_type"]== "heavy_weight_red_leg" :
-        target_bmr_CS5_mm = compute_target_bmr_heavy_weight_red_leg_coords_mm(petal)
+        target_bmr_CS5_mm , target_bmr_z_pma_mm = compute_target_bmr_heavy_weight_red_leg_coords_mm(petal)
     else :
         print('error {} not in ["guide_spikes","light_weight_red_leg","heavy_weight_red_leg"]'.format(inputs["bmr_type"]))
         sys.exit(2)
@@ -540,32 +568,60 @@ I will use a default file for now as a code test.
     #print("Measured residual arm rotation angle = {:+.3f} +- {:.3f} deg".format(mean_angle_deg,err))
     print("Arm rotation angle correction to apply = {:+.3f} +- {:.3f} deg".format(-mean_angle_deg,err))
     print("(Positive is clockwise when looking at the telescope from the PMA)")
+
+   ##############################################################
+
+    carriage_z = -60 # dummy value before adjustment
+    for loop in range(2) :
+        target_bmr_PMA_inch   = CS5_to_PMA_inch(target_bmr_CS5_inch,carriage_z = carriage_z)
+        measured_bmr_PMA_inch = CS5_to_PMA_inch(measured_bmr_CS5_inch,carriage_z = carriage_z)
+
+        measured_z_pma_inch = np.mean(measured_bmr_PMA_inch[2][valid_bmr])
+        target_bmr_z_pma_inch = target_bmr_z_pma_mm / inch2mm
+
+        delta_z = target_bmr_z_pma_inch-measured_z_pma_inch
+        print("for carriage_z = {:+.3f} delta_z = {:+.3f}".format(carriage_z,delta_z))
+        carriage_z -= delta_z
+
+
+    target_bmr_PMA_inch   = CS5_to_PMA_inch(target_bmr_CS5_inch,carriage_z = carriage_z)
+    measured_bmr_PMA_inch = CS5_to_PMA_inch(measured_bmr_CS5_inch,carriage_z = carriage_z)
+
+
+    print("mean z target_bmr_PMA_inch   = {:+0.2f} inch".format(np.mean(target_bmr_PMA_inch[2])))
+    print("mean z measured_bmr_PMA_inch = {:+0.2f} inch".format(np.mean(measured_bmr_PMA_inch[2])))
+
+    if True : # Ignore difference in z
+        measured_bmr_PMA_inch[2,valid_bmr] += ( np.mean(target_bmr_PMA_inch[2,valid_bmr]) - np.mean(measured_bmr_PMA_inch[2,valid_bmr]) )
+
     ##############################################################
+    ## sled lower struts
+    lower_strut_base_cs5_inch , lower_strut_plateform_cs5_inch = get_lower_struts_cs5_inch()
+    lower_struts_labels = ["LS1","LS2","LS3","LS4","LS5","LS6"]
+    lower_struts_base_xyz      = CS5_to_PMA_inch(lower_strut_base_cs5_inch,carriage_z=carriage_z)
+    initial_lower_struts_plateform_xyz = CS5_to_PMA_inch(lower_strut_plateform_cs5_inch,carriage_z=carriage_z)
 
-    target_bmr_PMA_inch   = CS5_to_PMA_inch(target_bmr_CS5_inch)
-    measured_bmr_PMA_inch = CS5_to_PMA_inch(measured_bmr_CS5_inch)
 
-
-    # struts labels
-    struts_labels = ["S1","S2","S3","S4","S5","S6"]
+    ## pma upper struts
+    upper_struts_labels = ["US1","US2","US3","US4","US5","US6"]
 
     # Reference coordinates of the base ends of the PMA struts in the PMA CS
-    struts_base_coords_inch     = np.array([[-26.875, -26.875, 26.875, 26.875, 15.475, 31.25],
-                                       [-43.811, -42.561, -43.811, -42.561, -42.561, -43.811],
-                                       [ -6.76, 8.49, -6.76, 8.49, 35.397, 35.397]])
+    upper_struts_base_xyz = np.array([[-26.875, -26.875, 26.875, 26.875, 15.475, 31.25],
+                                      [-43.811, -42.561, -43.811, -42.561, -42.561, -43.811],
+                                      [ -6.76, 8.49, -6.76, 8.49, 35.397, 35.397]])
 
-    # Reference coordinates of the platform ends of the PMA struts in the PMA CS
-    initial_struts_platform_coords_inch = np.array([[-26.875, -26.875, 26.875, 26.875, 26.475, 31.25],
-                                                    [-32.811, -42.561, -32.811, -42.561, -42.561, -32.811],
-                                                    [ -6.76, -2.51, -6.76, -2.51, 35.397, 35.397]])
+    # Reference coordinates of the plateform ends of the PMA struts in the PMA CS
+    initial_upper_struts_plateform_xyz = np.array([[-26.875, -26.875, 26.875, 26.875, 26.475, 31.25],
+                                                   [-32.811, -42.561, -32.811, -42.561, -42.561, -32.811],
+                                                   [ -6.76, -2.51, -6.76, -2.51, 35.397, 35.397]])
 
-    initial_struts_length_inch = np.sqrt(np.sum((initial_struts_platform_coords_inch - struts_base_coords_inch)**2,axis=0))
+    print("!!! there is something wrong with the upper struts y coordinate!!!")
+    delta_y_pma = 50.
+    upper_struts_base_xyz[1] += delta_y_pma
+    initial_upper_struts_plateform_xyz[1] += delta_y_pma
 
     print("=================================================")
 
-    if True :
-        # Ignore difference in z
-        measured_bmr_PMA_inch[2,valid_bmr] += ( np.mean(target_bmr_PMA_inch[2,valid_bmr]) - np.mean(measured_bmr_PMA_inch[2,valid_bmr]) )
 
     delta_inch_CS5 = (measured_bmr_CS5_inch-target_bmr_CS5_inch)
     dr_inch_CS5 = np.sqrt(delta_inch_CS5[0]**2+delta_inch_CS5[1]**2)
@@ -584,25 +640,73 @@ I will use a default file for now as a code test.
     #print("BMR mean offset dy (PMA)  = {:+.3f} inch".format(np.mean(delta_inch[1][valid_bmr])))
     print("=================================================")
 
-    pma_adjust = Transfo()
-    pma_adjust.fit(measured_bmr_PMA_inch[:,valid_bmr],target_bmr_PMA_inch[:,valid_bmr])
-    #pma_adjust.write("transfo.json")
-    pma_adjust.write("transfo.yaml")
+    if 1 :
+        print("Sled adjustment")
 
+        sled_adjust = Transfo2D()
+        rms = sled_adjust.fit(measured_bmr_PMA_inch[:,valid_bmr],target_bmr_PMA_inch[:,valid_bmr],test_mirror=False)
 
-    new_struts_platform_coords_inch = pma_adjust.apply(initial_struts_platform_coords_inch)
+        print("Sled adjust rms (inch) = ", rms)
+        print("Sled adjust rms (mm) = ", rms*inch2mm)
+        print("Sled adjust = ",sled_adjust)
 
-    new_struts_length_inch = np.sqrt(np.sum((new_struts_platform_coords_inch - struts_base_coords_inch)**2,axis=0))
-    print("Initial struts length (inch) =",array2str(initial_struts_length_inch))
-    print("New struts length (inch)     =",array2str(new_struts_length_inch))
-    strut_deltas_inch = new_struts_length_inch - initial_struts_length_inch
-    print("Struts deltas (inch):")
-    for s,d in enumerate(strut_deltas_inch) :
-        print("  {} {:+.3f}".format(struts_labels[s],d))
+        if 1 :
+            print("Pure vertical translation")
+            sled_adjust.angle=0.
+            sled_adjust.t[0]=0.
+            sled_adjust.t[1]=np.mean(target_bmr_PMA_inch[1][valid_bmr]-measured_bmr_PMA_inch[1][valid_bmr])
+        else :
+            print("Keep translation + rotation about z axis")
 
-    #print("Struts deltas (mm):")
-    #for s,d in enumerate(strut_deltas_inch) :
-    #    print("  {} {:+.3f}".format(struts_labels[s],d*inch2mm))
+        print("Apply this transform to the lower struts")
+        new_lower_struts_plateform_xyz = sled_adjust.apply(initial_lower_struts_plateform_xyz)
+
+        initial_lower_struts_length_inch = np.sqrt(np.sum((initial_lower_struts_plateform_xyz - lower_struts_base_xyz)**2,axis=0))
+        new_lower_struts_length_inch = np.sqrt(np.sum((new_lower_struts_plateform_xyz - lower_struts_base_xyz)**2,axis=0))
+        lower_strut_deltas_inch = new_lower_struts_length_inch - initial_lower_struts_length_inch
+
+        print("Initial lower_struts length (inch) =",array2str(initial_lower_struts_length_inch))
+        print("New lower_struts length (inch)     =",array2str(new_lower_struts_length_inch))
+
+        print("Initial lower_struts length (mm) =",array2str(initial_lower_struts_length_inch*inch2mm))
+        print("New lower_struts length (mm)     =",array2str(new_lower_struts_length_inch*inch2mm))
+        print("Lower_Struts deltas (mm):")
+        for s,d in enumerate(lower_strut_deltas_inch) :
+            print("  {} {:+.3f}".format(lower_struts_labels[s],d*inch2mm))
+
+        print("Also apply this transform to the bmr")
+        measured_bmr_PMA_inch = sled_adjust.apply(measured_bmr_PMA_inch)
+        print("Remove average z offset")
+        measured_bmr_PMA_inch[2] += np.mean(target_bmr_PMA_inch[2][valid_bmr]-measured_bmr_PMA_inch[2][valid_bmr])
+        delta_inch = measured_bmr_PMA_inch[:,valid_bmr]-target_bmr_PMA_inch[:,valid_bmr]
+        delta_mm   = delta_inch*inch2mm
+        print("Residual = ",delta_mm)
+        print("Corr. BMR mean offset dx (PMA)  = {:+.3f} mm".format(np.mean(delta_mm[0])))
+        print("Corr. BMR mean offset dy (PMA)  = {:+.3f} mm".format(np.mean(delta_mm[1])))
+        print("=================================================")
+
+    print("Now adjust PMA")
+    pma_adjust = Transfo2D()
+    rms = pma_adjust.fit(measured_bmr_PMA_inch[:,valid_bmr],target_bmr_PMA_inch[:,valid_bmr],test_mirror=False)
+    print("rms={:+.3f} mm".format(rms*inch2mm))
+    print("Transfo=",pma_adjust)
+
+    new_upper_struts_plateform_xyz = pma_adjust.apply(initial_upper_struts_plateform_xyz)
+    initial_upper_struts_length_inch = np.sqrt(np.sum((initial_upper_struts_plateform_xyz - upper_struts_base_xyz)**2,axis=0))
+    new_upper_struts_length_inch = np.sqrt(np.sum((new_upper_struts_plateform_xyz - upper_struts_base_xyz)**2,axis=0))
+    print("Initial upper_struts length (inch) =",array2str(initial_upper_struts_length_inch))
+    print("New upper_struts length (inch)     =",array2str(new_upper_struts_length_inch))
+    upper_strut_deltas_inch = new_upper_struts_length_inch - initial_upper_struts_length_inch
+    #print("Upper_Struts deltas (inch):")
+    #for s,d in enumerate(upper_strut_deltas_inch) :
+    #    print("  {} {:+.3f}".format(upper_struts_labels[s],d))
+
+    print("Initial upper_struts length (mm) =",array2str(initial_upper_struts_length_inch*inch2mm))
+    print("New upper_struts length (mm)     =",array2str(new_upper_struts_length_inch*inch2mm))
+
+    print("Upper_Struts deltas (mm):")
+    for s,d in enumerate(upper_strut_deltas_inch) :
+        print("  {} {:+.3f}".format(upper_struts_labels[s],d*inch2mm))
 
     predicted_new_bmr_PMA_inch = pma_adjust.apply(measured_bmr_PMA_inch)
     dist2_inch = np.sum((predicted_new_bmr_PMA_inch - target_bmr_PMA_inch)**2,axis=0)
@@ -619,6 +723,7 @@ I will use a default file for now as a code test.
     else :
         print("(fit rms = {:.3f} mm)".format(rms_mm))
     print("=================================================")
+    sys.stdout.flush()
 
     if plot :
         plt.figure("CS5")
@@ -664,17 +769,25 @@ I will use a default file for now as a code test.
                 res[2]=xyz[1] # y
                 return res
 
-            # struts
-            label='struts'
-            xyz1=xyz2plot(struts_base_coords_inch)
-            xyz2=xyz2plot(initial_struts_platform_coords_inch)
+            # upper struts
+            xyz1=xyz2plot(upper_struts_base_xyz)
+            xyz2=xyz2plot(initial_upper_struts_plateform_xyz)
             for s in range(6) :
                 ax.plot3D([xyz1[0,s],xyz2[0,s]],
                           [xyz1[1,s],xyz2[1,s]],
                           [xyz1[2,s],xyz2[2,s]],
                       color="red")
-                ax.text3D(xyz1[0,s],xyz1[1,s],xyz1[2,s],struts_labels[s],color="red")
-                label=None
+                ax.text3D(xyz1[0,s],xyz1[1,s],xyz1[2,s],upper_struts_labels[s],color="red")
+
+            # lower struts
+            xyz1=xyz2plot(lower_struts_base_xyz)
+            xyz2=xyz2plot(initial_lower_struts_plateform_xyz)
+            for s in range(6) :
+                ax.plot3D([xyz1[0,s],xyz2[0,s]],
+                          [xyz1[1,s],xyz2[1,s]],
+                          [xyz1[2,s],xyz2[2,s]],
+                      color="brown")
+                ax.text3D(xyz1[0,s],xyz1[1,s],xyz1[2,s],lower_struts_labels[s],color="brown")
 
             # bmr
             xyz=xyz2plot(measured_bmr_PMA_inch)
@@ -690,7 +803,7 @@ I will use a default file for now as a code test.
             x_cs5 = rad*np.cos(t)
             y_cs5 = rad*np.sin(t)
             z_cs5 = np.zeros(t.shape)
-            xyz = xyz2plot(CS5_to_PMA_inch(np.array([x_cs5,y_cs5,z_cs5])))
+            xyz = xyz2plot(CS5_to_PMA_inch(np.array([x_cs5,y_cs5,z_cs5]),carriage_z = carriage_z))
             ax.plot3D(xyz[0],xyz[1],xyz[2],color="gray")
 
             x_cs5=[]
@@ -705,16 +818,28 @@ I will use a default file for now as a code test.
             x_cs5.append(rad*np.sin(2*np.pi/10.*(petal+0.5)))
             y_cs5.append(-rad*np.cos(2*np.pi/10.*(petal+0.5)))
             z_cs5.append(0)
-            xyz = xyz2plot(CS5_to_PMA_inch(np.array([x_cs5,y_cs5,z_cs5])))
+            xyz = xyz2plot(CS5_to_PMA_inch(np.array([x_cs5,y_cs5,z_cs5]),carriage_z = carriage_z))
             ax.plot3D(xyz[0],xyz[1],xyz[2],color="gray")
 
-            xyz = xyz2plot(CS5_to_PMA_inch(np.array([[0,0],[0,-rad],[0,0]])))
+            xyz = xyz2plot(CS5_to_PMA_inch(np.array([[0,0],[0,-rad],[0,0]]),carriage_z = carriage_z))
             ax.plot3D(xyz[0],xyz[1],xyz[2],"--",color="gray",label="-y_CS5")
+
+
+            if 1 : # just to get a square
+                side=140
+                xyz=np.array([[0,0,0],[1,0,0],[1,1,0],[0,1,0],[0,0,1],[1,0,1],[1,1,1],[0,1,1]],dtype=float).T
+                xyz-=np.array([0.5,0.5,0.5])[:,None]
+                xyz *= side
+                xyz[2]+=10
+                xyz[1]+=50
+                ax.plot3D(xyz[0],xyz[1],xyz[2],".",color="gray")
+
             ax.set_xlabel('-x_PMA')
             ax.set_ylabel('z_PMA')
             ax.set_zlabel('y_PMA')
             ax.legend(title="petal {}".format(petal))
 
+        sys.stdout.flush()
         plt.show()
 
 
