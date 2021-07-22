@@ -55,7 +55,7 @@ class Transfo3D() :
         res = self.rotmat().dot(res)
         return res
 
-    def fit(self,input_xyz,target_xyz) :
+    def fit(self,input_xyz,target_xyz,test_mirror=True) :
 
         def setparams(params) :
             self.ax = params[0]
@@ -75,8 +75,6 @@ class Transfo3D() :
                                args = (input_xyz,target_xyz))
         params_direct = fits.x
         chi2_direct = chi2(params_direct,input_xyz,target_xyz)
-
-        test_mirror = True
 
         if test_mirror :
             self.mirror = True
@@ -204,16 +202,19 @@ class Transfo2D() :
 
         xyz = np.atleast_1d(xyz)
         assert(xyz.shape[0]==3)
-        res = self.rotmat().dot(xyz)
-        if self.mirror :
-            res[0] *= -1
+
+        res = xyz.copy()
         if len(xyz.shape)==1 :
             res += self.t
         else :
             res += self.t[:,None]
+
+        if self.mirror :
+            res[0] *= -1
+        res = self.rotmat().dot(res)
         return res
 
-    def fit(self,input_xyz,target_xyz) :
+    def fit(self,input_xyz,target_xyz,test_mirror=True) :
 
         def chi2(params, input_xyz, target_xyz) :
             self.angle = params[0]
@@ -221,26 +222,32 @@ class Transfo2D() :
             transformed_xyz = self.apply(input_xyz)
             return np.sum ( (target_xyz-transformed_xyz)**2 )
 
+        diff=np.mean(target_xyz-input_xyz,axis=1)
+
         self.mirror = False
-        fits = opt.minimize(chi2, [0, 0, 0],
+        fits = opt.minimize(chi2, [0, diff[0],diff[1]],
                                args = (input_xyz,target_xyz))
         params_direct = fits.x
         chi2_direct = chi2(params_direct,input_xyz,target_xyz)
 
-        self.mirror = True
-        fits = opt.minimize(chi2, [0, 0, 0],
-                               args = (input_xyz,target_xyz))
-        params_mirror = fits.x
-        chi2_mirror = chi2(params_mirror,input_xyz,target_xyz)
-
-        if chi2_mirror < chi2_direct :
-            self.mirror = True
-            self.angle = params_mirror[0]
-            self.t[:2]  = params_mirror[1:3]
-        else :
-            self.mirror = False
+        if not test_mirror :
             self.angle = params_direct[0]
             self.t[:2]  = params_direct[1:3]
+        else :
+            self.mirror = True
+            fits = opt.minimize(chi2, [0, 0, 0],
+                                args = (input_xyz,target_xyz))
+            params_mirror = fits.x
+            chi2_mirror = chi2(params_mirror,input_xyz,target_xyz)
+
+            if (chi2_mirror < chi2_direct) :
+                self.mirror = True
+                self.angle = params_mirror[0]
+                self.t[:2]  = params_mirror[1:3]
+            else :
+                self.mirror = False
+                self.angle = params_direct[0]
+                self.t[:2]  = params_direct[1:3]
 
         # compute rms distance
         transformed_xyz = self.apply(input_xyz)
