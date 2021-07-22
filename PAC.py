@@ -295,7 +295,7 @@ def compute_target_bmr_light_weight_red_leg_coords_mm(petal) :
         plt.plot(red_leg_mount_holes_CS5_mm[0,0],red_leg_mount_holes_CS5_mm[1,0],"o",color="b",label="hole1")
         plt.plot(red_leg_mount_holes_CS5_mm[0,1],red_leg_mount_holes_CS5_mm[1,1],"o",color="g",label="hole2")
         plt.plot(red_leg_mount_holes_CS5_mm[0,2],red_leg_mount_holes_CS5_mm[1,2],"o",color="r",label="hole3")
-        plt.plot(bmr_CS5_mm[0],bmr_CS5_mm[1],"o",markersize=12,label="bmr")
+        plt.plot(bmr_CS5_mm[0],bmr_CS5_mm[1],"+",markersize=12,label="bmr")
         #for b in range(bmr_CS5_mm.shape[1]) :
         #    plt.text(bmr_CS5_mm[0,b],bmr_CS5_mm[1,b],str(b+1))
         xyz_CS5 = C6206_to_CS5.apply(xyz_6206)
@@ -306,20 +306,21 @@ def compute_target_bmr_light_weight_red_leg_coords_mm(petal) :
         plt.xlabel("X_CS5 (mm)")
         plt.ylabel("Y_CS5 (mm)")
 
-        plt.figure("C6206")
-        plt.plot(red_leg_mount_holes_6206_mm[0,0],red_leg_mount_holes_6206_mm[1,0],"o",color="b",label="hole1")
-        plt.plot(red_leg_mount_holes_6206_mm[0,1],red_leg_mount_holes_6206_mm[1,1],"o",color="g",label="hole2")
-        plt.plot(red_leg_mount_holes_6206_mm[0,2],red_leg_mount_holes_6206_mm[1,2],"o",color="r",label="hole3")
+        if 0 :
+            plt.figure("C6206")
+            plt.plot(red_leg_mount_holes_6206_mm[0,0],red_leg_mount_holes_6206_mm[1,0],"o",color="b",label="hole1")
+            plt.plot(red_leg_mount_holes_6206_mm[0,1],red_leg_mount_holes_6206_mm[1,1],"o",color="g",label="hole2")
+            plt.plot(red_leg_mount_holes_6206_mm[0,2],red_leg_mount_holes_6206_mm[1,2],"o",color="r",label="hole3")
 
-        plt.plot(bmr_6206_mm[0],bmr_6206_mm[1],"o",markersize=12,label="bmr",color="C0")
-        for b in range(bmr_6206_mm.shape[1]) :
-            plt.text(bmr_6206_mm[0,b],bmr_6206_mm[1,b],str(b+1),color="C0")
-        plt.plot(xyz_6206[0,0],xyz_6206[1,0],"X",color="gray",label="A")
-        plt.plot(xyz_6206[0,1],xyz_6206[1,1],".",color="gray")
-        plt.gca().set_aspect('equal', adjustable='box')
-        plt.grid()
-        plt.xlabel("X_DESI-6206 (mm)")
-        plt.ylabel("Y_DESI-6206 (mm)")
+            plt.plot(bmr_6206_mm[0],bmr_6206_mm[1],"o",markersize=12,label="bmr",color="C0")
+            for b in range(bmr_6206_mm.shape[1]) :
+                plt.text(bmr_6206_mm[0,b],bmr_6206_mm[1,b],str(b+1),color="C0")
+            plt.plot(xyz_6206[0,0],xyz_6206[1,0],"X",color="gray",label="A")
+            plt.plot(xyz_6206[0,1],xyz_6206[1,1],".",color="gray")
+            plt.gca().set_aspect('equal', adjustable='box')
+            plt.grid()
+            plt.xlabel("X_DESI-6206 (mm)")
+            plt.ylabel("Y_DESI-6206 (mm)")
 
     return bmr_CS5_mm
 
@@ -365,7 +366,7 @@ def compute_target_bmr_heavy_weight_red_leg_coords_mm(petal) :
         plt.plot(red_leg_mount_holes_CS5_mm[0,0],red_leg_mount_holes_CS5_mm[1,0],"o",color="b",label="hole1")
         plt.plot(red_leg_mount_holes_CS5_mm[0,1],red_leg_mount_holes_CS5_mm[1,1],"o",color="g",label="hole2")
         plt.plot(red_leg_mount_holes_CS5_mm[0,2],red_leg_mount_holes_CS5_mm[1,2],"o",color="r",label="hole3")
-        plt.plot(bmr_CS5_mm[0],bmr_CS5_mm[1],"o",markersize=12,label="bmr")
+        plt.plot(bmr_CS5_mm[0],bmr_CS5_mm[1],"X",markersize=12,label="bmr")
         xyz_CS5 = C6206_to_CS5.apply(xyz_6206)
         plt.plot(xyz_CS5[0,0],xyz_CS5[1,0],"X",color="gray",label="A")
         plt.plot(xyz_CS5[0,1],xyz_CS5[1,1],".",color="gray")
@@ -374,18 +375,19 @@ def compute_target_bmr_heavy_weight_red_leg_coords_mm(petal) :
         plt.xlabel("X_CS5 (mm)")
         plt.ylabel("Y_CS5 (mm)")
 
-        plt.figure("C6206")
-        plt.plot(red_leg_mount_holes_6206_mm[0,0],red_leg_mount_holes_6206_mm[1,0],"o",color="b",label="hole1")
-        plt.plot(red_leg_mount_holes_6206_mm[0,1],red_leg_mount_holes_6206_mm[1,1],"o",color="g",label="hole2")
-        plt.plot(red_leg_mount_holes_6206_mm[0,2],red_leg_mount_holes_6206_mm[1,2],"o",color="r",label="hole3")
+        if 0 :
+            plt.figure("C6206")
+            plt.plot(red_leg_mount_holes_6206_mm[0,0],red_leg_mount_holes_6206_mm[1,0],"o",color="b",label="hole1")
+            plt.plot(red_leg_mount_holes_6206_mm[0,1],red_leg_mount_holes_6206_mm[1,1],"o",color="g",label="hole2")
+            plt.plot(red_leg_mount_holes_6206_mm[0,2],red_leg_mount_holes_6206_mm[1,2],"o",color="r",label="hole3")
 
-        plt.plot(bmr_6206_mm[0],bmr_6206_mm[1],"o",markersize=12,label="bmr")
-        plt.plot(xyz_6206[0,0],xyz_6206[1,0],"X",color="gray",label="A")
-        plt.plot(xyz_6206[0,1],xyz_6206[1,1],".",color="gray")
-        plt.gca().set_aspect('equal', adjustable='box')
-        plt.grid()
-        plt.xlabel("X_DESI-6206 (mm)")
-        plt.ylabel("Y_DESI-6206 (mm)")
+            plt.plot(bmr_6206_mm[0],bmr_6206_mm[1],"o",markersize=12,label="bmr")
+            plt.plot(xyz_6206[0,0],xyz_6206[1,0],"X",color="gray",label="A")
+            plt.plot(xyz_6206[0,1],xyz_6206[1,1],".",color="gray")
+            plt.gca().set_aspect('equal', adjustable='box')
+            plt.grid()
+            plt.xlabel("X_DESI-6206 (mm)")
+            plt.ylabel("Y_DESI-6206 (mm)")
 
     return bmr_CS5_mm
 
@@ -433,6 +435,10 @@ I will use a default file for now as a code test.
         print('error {} not in ["guide_spikes","light_weight_red_leg","heavy_weight_red_leg"]'.format(inputs["bmr_type"]))
         sys.exit(2)
     target_bmr_CS5_inch = target_bmr_CS5_mm/inch2mm
+
+    print("Targets locations CS5 inch")
+    for b in range(target_bmr_CS5_inch.shape[1]) :
+        print("{} {}".format(b,array2str(target_bmr_CS5_inch[:,b])))
 
     #################################################
 
@@ -500,7 +506,7 @@ I will use a default file for now as a code test.
         dtrans = np.sqrt(correction_when_retracting_pma_inch[0]**2+correction_when_retracting_pma_inch[1]**2)
         angle_deg  = np.arctan(dtrans/correction_when_retracting_pma_inch[2])*180./np.pi
         print("=================================================")
-        print("Apply correction for PMA misalignment of {:.1f} degrees of dx,dy= {:+.3f},{:+.3f} inch".format(angle_deg,
+        print("Apply correction for PMA misalignment of {:.3f} degrees of dx,dy= {:+.3f},{:+.3f} inch".format(angle_deg,
                                                                                                                    correction_when_retracting_pma_inch[0],correction_when_retracting_pma_inch[1]))
         if len(target_bmr_CS5_inch.shape) == 1 :
             target_bmr_CS5_inch[0:2] += correction_when_retracting_pma_inch[0:2] # change only x and y
@@ -509,6 +515,32 @@ I will use a default file for now as a code test.
 
     ##############################################################
 
+    # test
+    #a = 5.*np.pi/180
+    #ca = np.cos(a)
+    #sa = np.sin(a)
+    #rot= np.array([[ca,-sa,0],[sa,ca,0],[0,0,1]])
+    #xyz = np.array([0,1,0])
+    #print(rot.dot(xyz))
+    #measured_bmr_CS5_inch = rot.dot(measured_bmr_CS5_inch)
+
+    # first measure a residual rotation angle for the PMA arm
+    x1 = target_bmr_CS5_inch[0,valid_bmr]
+    y1 = target_bmr_CS5_inch[1,valid_bmr]
+    r1 = np.sqrt(x1**2+y1**2)
+    x2 = measured_bmr_CS5_inch[0,valid_bmr]
+    y2 = measured_bmr_CS5_inch[1,valid_bmr]
+    r2 = np.sqrt(x2**2+y2**2)
+    angles_deg = np.arcsin((-x2*y1+x1*y2)/(r1*r2)) *180/np.pi
+    mean_angle_deg = np.mean(angles_deg)
+    rms = np.std(angles_deg)
+    err = rms/np.sqrt(angles_deg.size)
+
+    print("=================================================")
+    #print("Measured residual arm rotation angle = {:+.3f} +- {:.3f} deg".format(mean_angle_deg,err))
+    print("Arm rotation angle correction to apply = {:+.3f} +- {:.3f} deg".format(-mean_angle_deg,err))
+    print("(Positive is clockwise when looking at the telescope from the PMA)")
+    ##############################################################
 
     target_bmr_PMA_inch   = CS5_to_PMA_inch(target_bmr_CS5_inch)
     measured_bmr_PMA_inch = CS5_to_PMA_inch(measured_bmr_CS5_inch)
@@ -568,9 +600,9 @@ I will use a default file for now as a code test.
     for s,d in enumerate(strut_deltas_inch) :
         print("  {} {:+.3f}".format(struts_labels[s],d))
 
-    print("Struts deltas (mm):")
-    for s,d in enumerate(strut_deltas_inch) :
-        print("  {} {:+.3f}".format(struts_labels[s],d*inch2mm))
+    #print("Struts deltas (mm):")
+    #for s,d in enumerate(strut_deltas_inch) :
+    #    print("  {} {:+.3f}".format(struts_labels[s],d*inch2mm))
 
     predicted_new_bmr_PMA_inch = pma_adjust.apply(measured_bmr_PMA_inch)
     dist2_inch = np.sum((predicted_new_bmr_PMA_inch - target_bmr_PMA_inch)**2,axis=0)
@@ -681,7 +713,7 @@ I will use a default file for now as a code test.
             ax.set_xlabel('-x_PMA')
             ax.set_ylabel('z_PMA')
             ax.set_zlabel('y_PMA')
-            ax.legend()
+            ax.legend(title="petal {}".format(petal))
 
         plt.show()
 
