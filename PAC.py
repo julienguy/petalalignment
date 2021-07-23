@@ -427,7 +427,7 @@ def get_lower_struts_cs5_inch():
 
     return strut_base_xyz_cs5_inch , strut_plateform_xyz_cs5_inch
 
-def compute_leg_center_of_rotation_cs5_mm(petal) :
+def compute_leg_center_of_rotation_cs5_mm(petal,plot=True) :
     # from drawing provided by Bobby
     # (file 'PMA Servicing Setup rot axes dims.PDF')
     # here are the 'light' bmr coordinates
@@ -450,7 +450,14 @@ def compute_leg_center_of_rotation_cs5_mm(petal) :
 
     # apply transfo to the center (which is 0,0,0)
     center=np.zeros(3)
-    return transfo.apply(center)
+    center=transfo.apply(center)
+
+    if plot :
+        plt.figure("CS5")
+        plt.plot(center[0],center[1],"+",color="purple")
+
+
+    return center
 
 def str2array(vals) :
     res = [float(v) for v in vals.split(",")]
@@ -559,7 +566,7 @@ I will use a default file for now as a code test.
     ######################################################################
 
     if not "outfile" in inputs :
-        outfile="moves.csv"
+        outfile=None
         print("WARNING no keyword 'outfile' found")
     else :
         outfile=inputs["outfile"]
@@ -894,22 +901,23 @@ I will use a default file for now as a code test.
 
     # save moves as csv table
     try :
-        # will survive an import error
-        from astropy.table import Table
+        if outfile is not None :
+            # will survive an import error
+            from astropy.table import Table
 
-        movetable=Table()
-        movetable["PETAL"]=[petal]
-        for name in moves.keys() :
-            movetable[name]=[moves[name]]
-        print("Move table")
-        print(movetable)
-        movetable.write(outfile,overwrite=True)
-        print("wrote table in",outfile)
-
+            movetable=Table()
+            movetable["PETAL"]=[petal]
+            for name in moves.keys() :
+                movetable[name]=[moves[name]]
+            print("Move table")
+            print(movetable)
+            movetable.write(outfile,overwrite=True)
+            print("wrote table in",outfile)
+            print("=================================================")
     except Exception as e :
         print(e)
         pass
-    print("=================================================")
+
 
     sys.stdout.flush()
 
