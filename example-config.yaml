@@ -1,0 +1,12 @@
+petal: 5
+bmr_type: "light_weight_red_leg"
+correct_pma_misalignement: 0
+correct_pma_arm_rotation: 0
+correct_pma_leg_rotation: 1
+correct_lower_struts_length: 1
+B1: -3.7424 , 16.1845 , -64.0084
+B2: 1.7538 , 16.0473 , -64.0017
+B3: 3.9335 , 17.8724 , -63.9971
+B4: -2.3009 , 19.6984 , -64.0030
+outfile: example-moves.csv
+plot: 1
