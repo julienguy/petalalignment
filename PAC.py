@@ -146,7 +146,7 @@ def get_target_bmr_guide_spikes_in_GS1_inch() :
     target_guide_spikes_bmr_GS1CS_inch[:,3]=[-0.6047, 0.0911, 1.5174]
     return target_guide_spikes_bmr_GS1CS_inch
 
-def compute_target_bmr_guide_spikes_coords_mm(petal) :
+def compute_target_bmr_guide_spikes_coords_mm(petal,plot=False) :
     """
     Computes the target bmr guide spikes coordinates in CS5
     Arg:
@@ -264,7 +264,7 @@ def get_red_leg_mount_holes_in_6206_mm() :
 
     return red_leg_holes_6206_mm
 
-def compute_target_bmr_light_weight_red_leg_coords_mm(petal) :
+def compute_target_bmr_light_weight_red_leg_coords_mm(petal,plot=False) :
 
     red_leg_mount_holes_CS5_mm  = get_red_leg_mount_holes_in_CS5_mm(petal)
     red_leg_mount_holes_6206_mm = get_red_leg_mount_holes_in_6206_mm()
@@ -342,7 +342,7 @@ def compute_target_bmr_light_weight_red_leg_coords_mm(petal) :
     z_pma_mm   = z_pma_inch*inch2mm
     return bmr_CS5_mm , z_pma_mm
 
-def compute_target_bmr_heavy_weight_red_leg_coords_mm(petal) :
+def compute_target_bmr_heavy_weight_red_leg_coords_mm(petal,plot=False) :
 
     red_leg_mount_holes_CS5_mm  = get_red_leg_mount_holes_in_CS5_mm(petal)
     red_leg_mount_holes_6206_mm = get_red_leg_mount_holes_in_6206_mm()
@@ -407,7 +407,7 @@ def compute_target_bmr_heavy_weight_red_leg_coords_mm(petal) :
             plt.xlabel("X_DESI-6206 (mm)")
             plt.ylabel("Y_DESI-6206 (mm)")
 
-    z_pma_inch = 35.397+15.04
+    z_pma_inch = 35.397+15.04 # z of strut + z of difference between strut and ball
     z_pma_mm   = z_pma_inch*inch2mm
 
     return bmr_CS5_mm , z_pma_mm
@@ -431,7 +431,30 @@ def get_lower_struts_cs5_inch():
 
     return strut_base_xyz_cs5_inch , strut_plateform_xyz_cs5_inch
 
+def compute_leg_center_of_rotation_cs5_mm(petal) :
+    # from drawing provided by Bobby
+    # (file 'PMA Servicing Setup rot axes dims.PDF')
+    # here are the 'light' bmr coordinates
+    # in a coordinate system centered on the leg axis of rotation,
+    # that we call it CCS here,
+    bmr_xyz_ccs_mm = np.zeros((3,4))
+    bmr_xyz_ccs_mm[:,0]=[9.49,86.76,0]
+    bmr_xyz_ccs_mm[:,1]=[-1.77,-52.50,0]
+    bmr_xyz_ccs_mm[:,2]=[41.37,-110.28,0]
+    bmr_xyz_ccs_mm[:,3]=[96.61,45.20,0]
 
+    # get coordinates in cs5
+    bmr_xyz_cs5_mm,junk = compute_target_bmr_light_weight_red_leg_coords_mm(petal)
+    bmr_xyz_ccs_mm[2] = np.mean(bmr_xyz_cs5_mm[2])
+
+    # fit transfo
+    transfo = Transfo2D()
+    rms=transfo.fit(bmr_xyz_ccs_mm,bmr_xyz_cs5_mm)
+    #print("DEBUG rms rotation center coord fit (mm) = ",rms)
+
+    # apply transfo to the center (which is 0,0,0)
+    center=np.zeros(3)
+    return transfo.apply(center)
 
 def str2array(vals) :
     res = [float(v) for v in vals.split(",")]
@@ -467,11 +490,11 @@ I will use a default file for now as a code test.
     # Compute target bmr coords in CS5 from metrology
     #################################################
     if inputs["bmr_type"] == "guide_spikes" :
-        target_bmr_CS5_mm , target_bmr_z_pma_mm  = compute_target_bmr_guide_spikes_coords_mm(petal)
+        target_bmr_CS5_mm , target_bmr_z_pma_mm  = compute_target_bmr_guide_spikes_coords_mm(petal,plot=plot)
     elif inputs["bmr_type"]== "light_weight_red_leg" :
-        target_bmr_CS5_mm , target_bmr_z_pma_mm = compute_target_bmr_light_weight_red_leg_coords_mm(petal)
+        target_bmr_CS5_mm , target_bmr_z_pma_mm = compute_target_bmr_light_weight_red_leg_coords_mm(petal,plot=plot)
     elif inputs["bmr_type"]== "heavy_weight_red_leg" :
-        target_bmr_CS5_mm , target_bmr_z_pma_mm = compute_target_bmr_heavy_weight_red_leg_coords_mm(petal)
+        target_bmr_CS5_mm , target_bmr_z_pma_mm = compute_target_bmr_heavy_weight_red_leg_coords_mm(petal,plot=plot)
     else :
         print('error {} not in ["guide_spikes","light_weight_red_leg","heavy_weight_red_leg"]'.format(inputs["bmr_type"]))
         sys.exit(2)
@@ -532,6 +555,27 @@ I will use a default file for now as a code test.
         print("  z coord when fully engaged   : {:.3f}".format(pma_fully_engaged_bmr_z_CS5_inch))
     ######################################################################
 
+    correct_pma_arm_rotation = False
+    if not "correct_pma_arm_rotation" in inputs :
+        print("WARNING no keyword 'correct_pma_arm_rotation' found")
+        print("I assume you don't want to correct from the PMA arm rotation.")
+    else :
+        val = int(inputs["correct_pma_arm_rotation"])
+        assert (val in [0,1])
+        correct_pma_arm_rotation = (val==1)
+        print("Will correct for the PMA arm rotation")
+
+
+    correct_pma_leg_rotation = False
+    if not "correct_pma_leg_rotation" in inputs :
+        print("WARNING no keyword 'correct_pma_leg_rotation' found")
+        print("I assume you don't want to correct from the PMA leg rotation.")
+    else :
+        val = int(inputs["correct_pma_leg_rotation"])
+        assert (val in [0,1])
+        correct_pma_leg_rotation = (val==1)
+        print("Will correct for the PMA leg rotation")
+
 
     # Compute PMA translation correction
     ##############################################################
@@ -582,8 +626,8 @@ I will use a default file for now as a code test.
     print("Arm rotation angle correction to apply = {:+.3f} +- {:.3f} deg".format(-mean_angle_deg,err))
     print("(Positive is clockwise when looking at the telescope from the PMA)")
 
-    if 0 :
-        print("WARNING: APPLY ARM ROTATION AS TEST")
+    if correct_pma_arm_rotation :
+        print("APPLY ARM ROTATION")
         ca=np.cos(-mean_angle_deg*np.pi/180)
         sa=np.sin(-mean_angle_deg*np.pi/180)
         rot= np.array([[ca,-sa,0],[sa,ca,0],[0,0,1]])
@@ -604,32 +648,36 @@ I will use a default file for now as a code test.
     x2 = measured_bmr_CS5_inch[0,valid_bmr]
     y2 = measured_bmr_CS5_inch[1,valid_bmr]
 
-    x1c=np.mean(x1)
-    y1c=np.mean(y1)
-    dx1=x1-x1c
-    dy1=y1-y1c
-    x2c=np.mean(x2)
-    y2c=np.mean(y2)
-    dx2=x2-x2c
-    dy2=y2-y2c
+    xyz_center = compute_leg_center_of_rotation_cs5_mm(petal)/inch2mm
+    xc  = xyz_center[0]
+    yc  = xyz_center[1]
+
+    dx1=x1-xc
+    dy1=y1-yc
+    dx2=x2-xc
+    dy2=y2-yc
+
     dr1=np.sqrt(dx1**2+dy1**2)
     dr2=np.sqrt(dx2**2+dy2**2)
+
     angles_deg = np.arcsin((-dx2*dy1+dx1*dy2)/(dr1*dr2)) *180/np.pi
     mean_leg_angle_deg = np.mean(angles_deg)
     rms = np.std(angles_deg)
     err = rms/np.sqrt(angles_deg.size)
     print("Leg rotation angle correction to apply = {:+.3f} +- {:.3f} deg".format(-mean_leg_angle_deg,err))
     print("(Positive is clockwise when looking at the telescope from the PMA)")
-    if 0 :
-        print("WARNING: APPLY LEG ROTATION AS TEST")
-        measured_bmr_CS5_inch[0] -= x2c
-        measured_bmr_CS5_inch[1] -= y2c
+
+    if correct_pma_leg_rotation :
+        print("APPLY LEG ROTATION")
+        measured_bmr_CS5_inch[0] -= xc
+        measured_bmr_CS5_inch[1] -= yc
         ca=np.cos(-mean_leg_angle_deg*np.pi/180)
         sa=np.sin(-mean_leg_angle_deg*np.pi/180)
         rot= np.array([[ca,-sa,0],[sa,ca,0],[0,0,1]])
         measured_bmr_CS5_inch = rot.dot(measured_bmr_CS5_inch)
-        measured_bmr_CS5_inch[0] += x2c
-        measured_bmr_CS5_inch[1] += y2c
+        measured_bmr_CS5_inch[0] += xc
+        measured_bmr_CS5_inch[1] += yc
+
     print("=================================================")
 ##############################################################
 
@@ -700,7 +748,7 @@ I will use a default file for now as a code test.
     #print("BMR mean offset dy (PMA)  = {:+.3f} inch".format(np.mean(delta_inch[1][valid_bmr])))
     print("=================================================")
 
-    if 0 :
+    if 1 :
         print("Sled struts adjustment")
 
         sled_adjust = Transfo2D()
@@ -777,14 +825,14 @@ I will use a default file for now as a code test.
     #print("Initial upper_struts length (inch) =",array2str(initial_upper_struts_length_inch))
     #print("New upper_struts length (inch)     =",array2str(new_upper_struts_length_inch))
     upper_strut_deltas_inch = new_upper_struts_length_inch - initial_upper_struts_length_inch
-    print("Upper_Struts deltas (inch):")
-    for s,d in enumerate(upper_strut_deltas_inch) :
-        print("  {} {:+.3f}".format(upper_struts_labels[s],d))
+    #print("Upper struts deltas (inch):")
+    #for s,d in enumerate(upper_strut_deltas_inch) :
+    #    print("  {} {:+.3f}".format(upper_struts_labels[s],d))
 
     print("Initial upper_struts length (mm) =",array2str(initial_upper_struts_length_inch*inch2mm))
     print("New upper_struts length (mm)     =",array2str(new_upper_struts_length_inch*inch2mm))
 
-    print("Upper_Struts deltas (mm):")
+    print("Upper struts deltas (mm):")
     for s,d in enumerate(upper_strut_deltas_inch) :
         print("  {} {:+.3f}".format(upper_struts_labels[s],d*inch2mm))
 
