@@ -799,7 +799,7 @@ I will use a default file for now as a code test.
         print("=================================================")
 
     print("PMA struts adjustment")
-    pma_adjust = Transfo3D()
+    pma_adjust = Transfo2D()
     if 0 :
         print("Force pure translation")
         pma_adjust.t[0] = np.mean(target_bmr_PMA_inch[0][valid_bmr]-measured_bmr_PMA_inch[0][valid_bmr])
