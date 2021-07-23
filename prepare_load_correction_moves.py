@@ -39,6 +39,7 @@ for petal in range(10) :
     file.write('correct_pma_misalignement: 0\n')
     file.write('correct_pma_arm_rotation: 0\n')
     file.write('correct_pma_leg_rotation: 1\n')
+    file.write('correct_lower_struts_length: 1\n')
     for b in range(5) :
         file.write('B{:d}: {:f},{:f},{:f}\n'.format(b+1,
                                                  bmr_xyz_meas[0,b],

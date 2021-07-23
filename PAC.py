@@ -607,6 +607,15 @@ I will use a default file for now as a code test.
         else :
             target_bmr_CS5_inch[0:2] += correction_when_retracting_pma_inch[0:2][:,None]
 
+    if not "correct_lower_struts_length" in inputs :
+        print("WARNING no keyword 'correct_lower_struts_length' found")
+        print("I assume you don't want to correct from the lower (sled) struts length.")
+    else :
+        val = int(inputs["correct_lower_struts_length"])
+        assert (val in [0,1])
+        correct_lower_struts_length = (val==1)
+        print("Will correct for the lower (sled) struts length")
+
     ##############################################################
 
     moves = dict()
