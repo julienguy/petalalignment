@@ -482,6 +482,13 @@ I will use a default file for now as a code test.
     print("Petal:",petal)
     print("BMR: '{}'".format(inputs['bmr_type']))
 
+    if "plot" in inputs :
+        val = int(inputs["plot"])
+        assert (val in [0,1])
+        plot = (val==1)
+    else :
+        plot = True
+
 
     # Compute target bmr coords in CS5 from metrology
     #################################################
@@ -551,6 +558,12 @@ I will use a default file for now as a code test.
         print("  z coord when fully engaged   : {:.3f}".format(pma_fully_engaged_bmr_z_CS5_inch))
     ######################################################################
 
+    if not "outfile" in inputs :
+        outfile="moves.csv"
+        print("WARNING no keyword 'outfile' found")
+    else :
+        outfile=inputs["outfile"]
+
     correct_pma_arm_rotation = False
     if not "correct_pma_arm_rotation" in inputs :
         print("WARNING no keyword 'correct_pma_arm_rotation' found")
@@ -596,6 +609,9 @@ I will use a default file for now as a code test.
 
     ##############################################################
 
+    moves = dict()
+    moves_description = dict()
+
     # test
     #a = 5.*np.pi/180
     #ca = np.cos(a)
@@ -622,8 +638,13 @@ I will use a default file for now as a code test.
     print("Arm rotation angle correction to apply = {:+.3f} +- {:.3f} deg".format(-mean_angle_deg,err))
     print("(Positive is clockwise when looking at the telescope from the PMA)")
 
+
+    moves["THETA"]=0.
+    moves_description["THETA"]=["PMA arm rotation angle, degrees"]
+
     if correct_pma_arm_rotation :
-        print("APPLY ARM ROTATION")
+        print("APPLY ARM ROTATION (THETA angle)")
+        moves["THETA"] = -mean_angle_deg # correction is opposite of effect
         ca=np.cos(-mean_angle_deg*np.pi/180)
         sa=np.sin(-mean_angle_deg*np.pi/180)
         rot= np.array([[ca,-sa,0],[sa,ca,0],[0,0,1]])
@@ -663,8 +684,12 @@ I will use a default file for now as a code test.
     print("Leg rotation angle correction to apply = {:+.3f} +- {:.3f} deg".format(-mean_leg_angle_deg,err))
     print("(Positive is clockwise when looking at the telescope from the PMA)")
 
+    moves["PHI"]=0.
+    moves_description["PHI"]=["PMA new leg rotation angle, degrees"]
+
     if correct_pma_leg_rotation :
-        print("APPLY LEG ROTATION")
+        print("APPLY LEG ROTATION (PHI)")
+        moves["PHI"] = -mean_angle_deg # correction is opposite of effect
         measured_bmr_CS5_inch[0] -= xc
         measured_bmr_CS5_inch[1] -= yc
         ca=np.cos(-mean_leg_angle_deg*np.pi/180)
@@ -744,6 +769,10 @@ I will use a default file for now as a code test.
     #print("BMR mean offset dy (PMA)  = {:+.3f} inch".format(np.mean(delta_inch[1][valid_bmr])))
     print("=================================================")
 
+    for name in lower_struts_labels :
+        moves[name]=0.
+        moves_description[name]=["Lower (sled) strut #{}, change of length, mm".format(name[-1])]
+
     if 1 :
         print("Sled struts adjustment")
 
@@ -785,7 +814,7 @@ I will use a default file for now as a code test.
         print("Lower_Struts deltas (mm):")
         for s,d in enumerate(lower_strut_deltas_inch) :
             print("  {} {:+.3f}".format(lower_struts_labels[s],d*inch2mm))
-
+            moves[lower_struts_labels[s]]=d*inch2mm
         print("=================================================")
         print("Also apply this transform to the bmr")
         measured_bmr_PMA_inch = sled_adjust.apply(measured_bmr_PMA_inch)
@@ -793,10 +822,15 @@ I will use a default file for now as a code test.
         measured_bmr_PMA_inch[2] += np.mean(target_bmr_PMA_inch[2][valid_bmr]-measured_bmr_PMA_inch[2][valid_bmr])
         delta_inch = measured_bmr_PMA_inch[:,valid_bmr]-target_bmr_PMA_inch[:,valid_bmr]
         delta_mm   = delta_inch*inch2mm
-        #print("Residual = ",delta_mm)
+
         print("Corr. BMR mean offset dx (PMA)  = {:+.3f} mm".format(np.mean(delta_mm[0])))
         print("Corr. BMR mean offset dy (PMA)  = {:+.3f} mm".format(np.mean(delta_mm[1])))
         print("=================================================")
+
+
+    for name in upper_struts_labels :
+        moves[name]=0.
+        moves_description[name]=["Upper (PMA) strut #{}, change of length, mm".format(name[-1])]
 
     print("PMA struts adjustment")
     pma_adjust = Transfo2D()
@@ -831,6 +865,7 @@ I will use a default file for now as a code test.
     print("Upper struts deltas (mm):")
     for s,d in enumerate(upper_strut_deltas_inch) :
         print("  {} {:+.3f}".format(upper_struts_labels[s],d*inch2mm))
+        moves[upper_struts_labels[s]]=d*inch2mm
 
     predicted_new_bmr_PMA_inch = pma_adjust.apply(measured_bmr_PMA_inch)
     dist2_inch = np.sum((predicted_new_bmr_PMA_inch - target_bmr_PMA_inch)**2,axis=0)
@@ -847,6 +882,26 @@ I will use a default file for now as a code test.
     else :
         print("(fit rms = {:.3f} mm)".format(rms_mm))
     print("=================================================")
+
+    # save moves as csv table
+    try :
+        # will survive an import error
+        from astropy.table import Table
+
+        movetable=Table()
+        movetable["PETAL"]=[petal]
+        for name in moves.keys() :
+            movetable[name]=[moves[name]]
+        print("Move table")
+        print(movetable)
+        movetable.write(outfile,overwrite=True)
+        print("wrote table in",outfile)
+
+    except Exception as e :
+        print(e)
+        pass
+    print("=================================================")
+
     sys.stdout.flush()
 
     if plot :

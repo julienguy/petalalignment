@@ -19,10 +19,10 @@ for petal in range(10) :
 
     for b in range(5) :
         i=np.where(table["Name"]=="P{:d}_FL_H{:d}".format(petal,b+1))[0][0]
-        print(petal,b+1,i)
+        #print(petal,b+1,i)
         bmr_xyz_fl[:,b] = [x[i],y[i],z[i]]
         i=np.where(table["Name"]=="P{:d}_NL_H{:d}".format(petal,b+1))[0][0]
-        print(petal,b+1,i)
+        #print(petal,b+1,i)
         bmr_xyz_nl[:,b] = [x[i],y[i],z[i]]
 
     # get the target locations
@@ -44,6 +44,12 @@ for petal in range(10) :
                                                  bmr_xyz_meas[0,b],
                                                  bmr_xyz_meas[1,b],
                                                  bmr_xyz_meas[2,b]))
-
+    file.write(f'outfile: petal{petal}-load-correction-moves.csv\n')
+    file.write('plot: 0\n')
     file.close()
-    print("wrote",filename)
+    #print("wrote",filename)
+    logfilename=f"log-petal{petal}-heavy-red-leg-20210722-FL2NL.txt"
+    cmd="./PAC.py "+filename+" > "+logfilename
+    print(cmd)
+
+    # grep -e "Leg rotation angle correction to apply"  -e LS -e US log-petal9-heavy-red-leg-20210722-FL2NL.txt
