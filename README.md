@@ -30,9 +30,9 @@ of an array of reflective balls (Ball Mount Reflectors in the code), for differe
 
 Single python script to simplify installation and usage on windows machine.
 
-```python PAC.py test-petal0.yaml```
+```python PAC.py example-config.yaml```
 
-All inputs are provided in a yaml file. For instance, in `test-petal0.yaml`:
+All inputs are provided in a yaml file. For instance, in `test/test-petal0.yaml`:
 ```
 # Petal Position (Per DESI-3596)
 
