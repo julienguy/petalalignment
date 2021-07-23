@@ -334,11 +334,7 @@ def compute_target_bmr_light_weight_red_leg_coords_mm(petal,plot=False) :
             plt.xlabel("X_DESI-6206 (mm)")
             plt.ylabel("Y_DESI-6206 (mm)")
 
-    # light bmr, mean target CS5 z (mm)= -1625.0265438968586
-    # heavy bmr, mean target CS5 z (mm)= -1624.7076639408817
-    # z_pma_inch_heavy = 35.397+15.04
-    print("WARNING: approximate z offset between heavy and light bmr ~10inch")
-    z_pma_inch = 35.397+15.04-10. # approximate z offset between heavy and light
+    z_pma_inch = 35.397+15.04 # z of strut + z of difference between strut and ball
     z_pma_mm   = z_pma_inch*inch2mm
     return bmr_CS5_mm , z_pma_mm
 
