@@ -698,7 +698,7 @@ I will use a default file for now as a code test.
 
     if correct_pma_leg_rotation :
         print("APPLY LEG ROTATION (PHI)")
-        moves["PHI"] = -mean_angle_deg # correction is opposite of effect
+        moves["PHI"] = -mean_leg_angle_deg # correction is opposite of effect
         measured_bmr_CS5_inch[0] -= xc
         measured_bmr_CS5_inch[1] -= yc
         ca=np.cos(-mean_leg_angle_deg*np.pi/180)
