@@ -5,7 +5,7 @@ from astropy.table import Table
 
 from PAC import inch2mm,compute_target_bmr_heavy_weight_red_leg_coords_mm
 
-table=Table.read("PetalShiftsLoadNoLoad-20210722.csv")
+table=Table.read("PetalShiftsLoadNoLoad-20210722-corrected-petal7.csv")
 x=list(table["ActualX"])
 y=list(table["ActualY"])
 z=list(table["ActualZ"])
