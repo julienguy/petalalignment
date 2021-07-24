@@ -581,16 +581,24 @@ I will use a default file for now as a code test.
         correct_pma_arm_rotation = (val==1)
         print("Will correct for the PMA arm rotation")
 
+    fixed_pma_leg_rotation_phi = None
+    if "fixed_pma_leg_rotation_phi" in inputs :
+        fixed_pma_leg_rotation_phi = float(inputs["fixed_pma_leg_rotation_phi"])
+        print("Will FIX the PMA leg rotation angle PHI to {:+.3f} deg".format(fixed_pma_leg_rotation_phi))
 
-    correct_pma_leg_rotation = False
-    if not "correct_pma_leg_rotation" in inputs :
-        print("WARNING no keyword 'correct_pma_leg_rotation' found")
-        print("I assume you don't want to correct from the PMA leg rotation.")
+    if fixed_pma_leg_rotation_phi :
+        correct_pma_leg_rotation = True
     else :
-        val = int(inputs["correct_pma_leg_rotation"])
-        assert (val in [0,1])
-        correct_pma_leg_rotation = (val==1)
-        print("Will correct for the PMA leg rotation")
+        correct_pma_leg_rotation = False
+        if not "correct_pma_leg_rotation" in inputs :
+            print("WARNING no keyword 'correct_pma_leg_rotation' found")
+            print("I assume you don't want to correct from the PMA leg rotation.")
+        else :
+            val = int(inputs["correct_pma_leg_rotation"])
+            assert (val in [0,1])
+            correct_pma_leg_rotation = (val==1)
+            print("Will correct for the PMA leg rotation")
+
 
 
     # Compute PMA translation correction
@@ -697,15 +705,23 @@ I will use a default file for now as a code test.
     mean_leg_angle_deg = np.mean(angles_deg)
     rms = np.std(angles_deg)
     err = rms/np.sqrt(angles_deg.size)
-    print("Leg rotation angle correction to apply = {:+.3f} +- {:.3f} deg".format(-mean_leg_angle_deg,err))
+
+    if fixed_pma_leg_rotation_phi is not None :
+        print("Measured a rotation of {:+3f} BUT will apply a rotation of {:+3f} deg".format( -mean_leg_angle_deg,fixed_pma_leg_rotation_phi))
+        delta_phi = fixed_pma_leg_rotation_phi
+        print("(fixed_pma_leg_rotation_phi)")
+    else :
+        delta_phi = -mean_leg_angle_deg  # correction is opposite of effect
+        print("Measured leg rotation angle correction to apply = {:+.3f} deg".format(delta_phi))
+
     print("(Positive is clockwise when looking at the telescope from the PMA)")
 
     moves["PHI"]=0.
     moves_description["PHI"]=["PMA new leg rotation angle, degrees"]
 
-    if correct_pma_leg_rotation :
-        print("APPLY LEG ROTATION (PHI)")
-        moves["PHI"] = -mean_leg_angle_deg # correction is opposite of effect
+    if correct_pma_leg_rotation or (fixed_pma_leg_rotation_phi is not None):
+        print("APPLY LEG ROTATION delta PHI = {:+.3f}".format(delta_phi))
+        moves["PHI"] = delta_phi
         measured_bmr_CS5_inch[0] -= xc
         measured_bmr_CS5_inch[1] -= yc
         ca=np.cos(-mean_leg_angle_deg*np.pi/180)
@@ -789,7 +805,7 @@ I will use a default file for now as a code test.
         moves[name]=0.
         moves_description[name]=["Lower (sled) strut #{}, change of length, mm".format(name[-1])]
 
-    if 1 :
+    if correct_lower_struts_length :
         print("Sled struts adjustment")
 
         sled_adjust = Transfo2D()
