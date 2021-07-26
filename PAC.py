@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import yaml
 
 from transfo import Transfo3D as Transfo
-from transfo import Transfo3D,OldTransfo3D,Transfo2D
+from transfo import Transfo3D,Transfo2D,Rot3D,Rot2D
 #from transfo import Transfo2D as Transfo
 
 inch2mm = 25.4
@@ -407,6 +407,49 @@ def compute_target_bmr_heavy_weight_red_leg_coords_mm(petal,plot=False) :
     z_pma_mm   = z_pma_inch*inch2mm
 
     return bmr_CS5_mm , z_pma_mm
+
+
+def adjust_rail_axis(petal,carriage_z,bmr_xyz_cs5_inch,rail_xyz_cs5_inch) :
+
+    # series of points along the rails
+    bmr_xyz = CS5_to_PMA_inch(bmr_xyz_cs5_inch,carriage_z)
+    pivot_xyz = np.mean(bmr_xyz,axis=1)
+    rail_xyz = CS5_to_PMA_inch(rail_xyz_cs5_inch,carriage_z)
+
+    dxyz=rail_xyz-pivot_xyz[:,None]
+    x=dxyz[0]
+    y=dxyz[1]
+    z=dxyz[2]
+    cx=np.polyfit(z,x,1)
+    dxdz=cx[0]
+    cy=np.polyfit(z,y,1)
+    dydz=cy[0]
+    #print("dxdz=",dxdz)
+    #print("dydz=",dydz)
+    dxyz_target = np.array([[0.,0.,0.],[0.,0.,1.]]).T
+    dxyz_meas   = dxyz_target.copy()
+    dxyz_meas[0] += dxdz*dxyz_target[2]
+    dxyz_meas[1] += dydz*dxyz_target[2]
+
+    transfo=Rot2D()
+    transfo.center = np.zeros(3) # center is zero
+    transfo.fit(dxyz_meas,dxyz_target)
+    transfo.center = pivot_xyz # center is mean of bmr
+    print("Fitted transfo for rail alignment:")
+    print(transfo)
+    transformed_rail_xyz = transfo.apply(rail_xyz)
+    print("DEBUG before rail fit, dx (mm) =",array2str((rail_xyz[0]-np.mean(rail_xyz[0]))*inch2mm))
+    print("DEBUG before rail fit, dy (mm) =",array2str((rail_xyz[1]-np.mean(rail_xyz[1]))*inch2mm))
+    print("DEBUG after  rail fit, dx (mm) =",array2str((transformed_rail_xyz[0]-np.mean(transformed_rail_xyz[0]))*inch2mm))
+    print("DEBUG after  rail fit, dy (mm) =",array2str((transformed_rail_xyz[1]-np.mean(transformed_rail_xyz[1]))*inch2mm))
+
+    # check change of coords for bmrs
+    transformed_bmr_xyz = transfo.apply(bmr_xyz)
+    dxyz = transformed_bmr_xyz - bmr_xyz
+    dist_mm = np.sqrt(dxyz[0]**2+dxyz[1]**2)*inch2mm
+    print("DEBUG after rail fit, dr(bmr) (mm) =",array2str(dist_mm))
+    return transfo
+
 
 def get_lower_struts_cs5_inch():
     strut_base_xyz_cs5_inch = np.zeros((3,6),dtype=float)
@@ -938,6 +981,38 @@ I will use a default file for now as a code test.
 
 
     sys.stdout.flush()
+
+
+    if 1 :
+        print("Upper PMA upper rail alignment")
+
+        if 1 : # make up some numbers for now
+            nmeas=12
+            x = np.repeat(np.mean(target_bmr_CS5_inch[0])+0.1,nmeas)
+            y = np.repeat(np.mean(target_bmr_CS5_inch[1])+0.1,nmeas)
+            z = -np.linspace(0,10,nmeas) + np.mean(target_bmr_CS5_inch[2]) - 1
+            dxdz = np.tan(0.*np.pi/180)
+            dydz = np.tan(0.1*np.pi/180)
+            x += dxdz*(z-z[0])
+            y += dydz*(z-z[0])
+            rail_xyz_cs5_inch = np.array([x,y,z])
+
+
+
+        bmr_xyz_cs5_inch  = target_bmr_CS5_inch
+
+        transfo = adjust_rail_axis(petal,carriage_z,bmr_xyz_cs5_inch,rail_xyz_cs5_inch)
+
+        modified_upper_struts_plateform_xyz = transfo.apply(initial_upper_struts_plateform_xyz)
+        modified_upper_struts_length_inch = np.sqrt(np.sum((modified_upper_struts_plateform_xyz - upper_struts_base_xyz)**2,axis=0))
+        upper_strut_deltas_inch = modified_upper_struts_length_inch - initial_upper_struts_length_inch
+        print("Initial upper_struts length (mm) =",array2str(initial_upper_struts_length_inch*inch2mm))
+        print("New upper_struts length (mm)     =",array2str(modified_upper_struts_length_inch*inch2mm))
+        print("Upper struts deltas (FOR RAIL ALIGNMENT ONLY) (mm):")
+        for s,d in enumerate(upper_strut_deltas_inch) :
+            print("  {} {:+.3f}".format(upper_struts_labels[s],d*inch2mm))
+
+
 
     if plot :
         plt.figure("CS5")
