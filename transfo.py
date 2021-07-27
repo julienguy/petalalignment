@@ -68,10 +68,9 @@ class Transfo3D() :
             transformed_xyz = self.apply(input_xyz)
             return np.sum ( (target_xyz-transformed_xyz)**2 )
 
-
         diff=np.mean(target_xyz-input_xyz,axis=1)
         self.mirror = False
-        fits = opt.minimize(chi2, [0, 0, 1, diff[0], diff[1], diff[2]],
+        fits = opt.minimize(chi2, [0, 0, 0, diff[0], diff[1], diff[2]],
                                args = (input_xyz,target_xyz))
         params_direct = fits.x
         chi2_direct = chi2(params_direct,input_xyz,target_xyz)
@@ -125,6 +124,261 @@ class Transfo3D() :
         params['dy'] = float(self.t[1])
         params['dz'] = float(self.t[2])
         params['mirror'] = bool(self.mirror)
+        return params
+
+    @classmethod
+    def read_json(cls,filename):
+        import json
+        with open(filename) as fx:
+            s = fx.read()
+        tx = cls()
+        params  = json.loads(s)
+        return cls.read_dict(params)
+
+    @classmethod
+    def read_yaml(cls,filename):
+        import yaml
+        with open(filename) as fx:
+            s = fx.read()
+        params  = yaml.safe_load(s)
+        return cls.read_dict(params)
+
+    @classmethod
+    def read(cls,filename):
+        if filename.endswith("yaml"):
+            return cls.read_yaml(filename)
+        elif filename.endswith("json"):
+            return cls.read_json(filename)
+        else :
+            raise IOError("Cannot write transfo to '{}'. Only yaml or json are supported.".format(filename))
+
+    def write_json(self, filename):
+        import json
+        params = self.write_dict()
+        with open(filename, 'w') as fx:
+            fx.write(json.dumps(params))
+
+    def write_yaml(self, filename):
+        import yaml
+        params = self.write_dict()
+        with open(filename, 'w') as fx:
+            fx.write(yaml.dump(params))
+
+    def write(self, filename):
+        if filename.endswith("yaml"):
+            self.write_yaml(filename)
+        elif filename.endswith("json"):
+            self.write_json(filename)
+        else :
+            raise IOError("Cannot write transfo to '{}'. Only yaml or json are supported.".format(filename))
+
+class Rot2D() :
+    '''
+    Function to minimize when best fitting the transform matrix between input
+    BMR locations and target BMR locations.
+
+    mat: 1x6 Numpy array, with the first 3 values being a target rotation vector
+    and the last 3 values a translation vector
+
+    inputs: 3xN Numpy array containing measured BMR locations, where N is the
+    number of Bmr
+
+    targets: 3xN Numpy array containing target BMR locations
+    '''
+
+    # rotation then translation
+    def __init__(self) :
+        self.ax = 0.
+        self.ay = 0.
+        self.center = np.zeros(3)
+
+    def rotmat(self) :
+        cx=np.cos(self.ax)
+        sx=np.sin(self.ax)
+        cy=np.cos(self.ay)
+        sy=np.sin(self.ay)
+
+        mx = np.array([[1,0,0],[0,cx,sx],[0,-sx,cx]])
+        my = np.array([[cy,0,-sy],[0,1,0],[sy,0,cy]])
+        m = mx.dot(my)
+        return m
+
+    def apply(self,xyz) :
+
+        xyz = np.atleast_1d(xyz).astype(float)
+        assert(xyz.shape[0]==3)
+        return self.rotmat().dot(xyz-self.center[:,None])+self.center[:,None]
+
+    def fit(self,input_xyz,target_xyz,test_mirror=True) :
+
+        def setparams(params) :
+            self.ax = params[0]
+            self.ay = params[1]
+
+        def chi2(params, input_xyz, target_xyz) :
+            setparams(params)
+            transformed_xyz = self.apply(input_xyz)
+            return np.sum ( (target_xyz-transformed_xyz)**2 )
+
+
+        fits = opt.minimize(chi2, [0, 0, 0],
+                               args = (input_xyz,target_xyz))
+
+        setparams(fits.x)
+        # compute rms distance
+        transformed_xyz = self.apply(input_xyz)
+        rms = np.sqrt(np.sum((target_xyz-transformed_xyz)**2)/target_xyz.shape[1])
+        return rms
+
+    def __str__(self) :
+        r2d=180/np.pi
+        line="Rot3D: rotation angles x={:.5f} y={:.5f} deg\n".format(r2d*self.ax,r2d*self.ay)
+        return line
+
+    @classmethod
+    def read_dict(cls,params):
+        tx = cls()
+        tx.ax    = params['ax']
+        tx.ay    = params['ay']
+        tx.center[0] = params['cx']
+        tx.center[1] = params['cy']
+        tx.center[2] = params['cz']
+        return tx
+
+    def write_dict(self):
+        params = dict()
+        params['ax'] = float(self.ax)
+        params['ay'] = float(self.ay)
+        params['cx'] = float(self.center[0])
+        params['cy'] = float(self.center[1])
+        params['cz'] = float(self.center[2])
+        return params
+
+    @classmethod
+    def read_json(cls,filename):
+        import json
+        with open(filename) as fx:
+            s = fx.read()
+        tx = cls()
+        params  = json.loads(s)
+        return cls.read_dict(params)
+
+    @classmethod
+    def read_yaml(cls,filename):
+        import yaml
+        with open(filename) as fx:
+            s = fx.read()
+        params  = yaml.safe_load(s)
+        return cls.read_dict(params)
+
+    @classmethod
+    def read(cls,filename):
+        if filename.endswith("yaml"):
+            return cls.read_yaml(filename)
+        elif filename.endswith("json"):
+            return cls.read_json(filename)
+        else :
+            raise IOError("Cannot write transfo to '{}'. Only yaml or json are supported.".format(filename))
+
+    def write_json(self, filename):
+        import json
+        params = self.write_dict()
+        with open(filename, 'w') as fx:
+            fx.write(json.dumps(params))
+
+    def write_yaml(self, filename):
+        import yaml
+        params = self.write_dict()
+        with open(filename, 'w') as fx:
+            fx.write(yaml.dump(params))
+
+    def write(self, filename):
+        if filename.endswith("yaml"):
+            self.write_yaml(filename)
+        elif filename.endswith("json"):
+            self.write_json(filename)
+        else :
+            raise IOError("Cannot write transfo to '{}'. Only yaml or json are supported.".format(filename))
+class Rot3D() :
+    '''
+    Function to minimize when best fitting the transform matrix between input
+    BMR locations and target BMR locations.
+
+    mat: 1x6 Numpy array, with the first 3 values being a target rotation vector
+    and the last 3 values a translation vector
+
+    inputs: 3xN Numpy array containing measured BMR locations, where N is the
+    number of Bmr
+
+    targets: 3xN Numpy array containing target BMR locations
+    '''
+
+    # rotation then translation
+    def __init__(self) :
+        self.ax = 0.
+        self.ay = 0.
+        self.az = 0.
+
+    def rotmat(self) :
+        cx=np.cos(self.ax)
+        sx=np.sin(self.ax)
+        cy=np.cos(self.ay)
+        sy=np.sin(self.ay)
+        cz=np.cos(self.az)
+        sz=np.sin(self.az)
+
+        mx = np.array([[1,0,0],[0,cx,sx],[0,-sx,cx]])
+        my = np.array([[cy,0,-sy],[0,1,0],[sy,0,cy]])
+        mz = np.array([[cz,sz,0],[-sz,cz,0],[0,0,1]])
+        m = mx.dot(my).dot(mz)
+        return m
+
+    def apply(self,xyz) :
+
+        xyz = np.atleast_1d(xyz).astype(float)
+        assert(xyz.shape[0]==3)
+        return self.rotmat().dot(xyz)
+
+    def fit(self,input_xyz,target_xyz,test_mirror=True) :
+
+        def setparams(params) :
+            self.ax = params[0]
+            self.ay = params[1]
+            self.az = params[2]
+
+        def chi2(params, input_xyz, target_xyz) :
+            setparams(params)
+            transformed_xyz = self.apply(input_xyz)
+            return np.sum ( (target_xyz-transformed_xyz)**2 )
+
+
+        fits = opt.minimize(chi2, [0, 0, 0],
+                               args = (input_xyz,target_xyz))
+
+        setparams(fits.x)
+        # compute rms distance
+        transformed_xyz = self.apply(input_xyz)
+        rms = np.sqrt(np.sum((target_xyz-transformed_xyz)**2)/target_xyz.shape[1])
+        return rms
+
+    def __str__(self) :
+        r2d=180/np.pi
+        line="Rot3D: rotation angles x={:.1f} y={:.1f} z={:.1f} deg\n".format(r2d*self.ax,r2d*self.ay,r2d*self.az)
+        return line
+
+    @classmethod
+    def read_dict(cls,params):
+        tx = cls()
+        tx.ax    = params['ax']
+        tx.ay    = params['ay']
+        tx.az    = params['az']
+        return tx
+
+    def write_dict(self):
+        params = dict()
+        params['ax'] = float(self.ax)
+        params['ay'] = float(self.ay)
+        params['az'] = float(self.az)
         return params
 
     @classmethod

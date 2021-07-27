@@ -796,6 +796,11 @@ I will use a default file for now as a code test.
     measured_bmr_PMA_inch = CS5_to_PMA_inch(measured_bmr_CS5_inch,carriage_z = carriage_z)
 
 
+    #print ("HACK: pretend it's 1mm too high")
+    measured_bmr_PMA_inch = target_bmr_PMA_inch.copy()
+    measured_bmr_PMA_inch[1] += 1./inch2mm
+
+
     print("mean z target_bmr_PMA_inch   = {:+0.2f} inch".format(np.mean(target_bmr_PMA_inch[2])))
     print("mean z measured_bmr_PMA_inch = {:+0.2f} inch".format(np.mean(measured_bmr_PMA_inch[2])))
 
@@ -983,10 +988,10 @@ I will use a default file for now as a code test.
     sys.stdout.flush()
 
 
-    if 1 :
+    if 0 :
         print("Upper PMA upper rail alignment")
 
-        if 1 : # make up some numbers for now
+        if 0 : # make up some numbers for now
             nmeas=12
             x = np.repeat(np.mean(target_bmr_CS5_inch[0])+0.1,nmeas)
             y = np.repeat(np.mean(target_bmr_CS5_inch[1])+0.1,nmeas)
@@ -997,7 +1002,25 @@ I will use a default file for now as a code test.
             y += dydz*(z-z[0])
             rail_xyz_cs5_inch = np.array([x,y,z])
 
+        if 0 : # actual measurements, associated with petal4-20210726-6.yaml
+            rail_xyz_cs5_inch=np.array([[11.6507,15.8281,-88.6123],
+                                        [11.6533,15.8231,-85.8354],
+                                        [11.6551,15.8199,-82.7343],
+                                        [11.6610,15.8123,-78.5379],
+                                        [11.6671,15.8037,-75.3151],
+                                        [11.6758,15.7942,-72.4243],
+                                        [11.6865,15.7832,-68.9991],
+                                        [11.6865,15.7830,-68.9990],
+                                        [11.6943,15.7746,-64.2130]]).T
 
+        if 0 : # actual measurements, associated with petal4-20210726-7.yaml
+            # pretty good
+            # Rot3D: rotation angles x=0.00871 y=-0.00519 deg
+            rail_xyz_cs5_inch=np.array([[11.6958,15.7735,-88.6021],
+                                        [11.6908,15.7798,-82.3316],
+                                        [11.6900,15.7823,-77.0319],
+                                        [11.6956,15.7754,-71.5362],
+                                        [11.6984,15.7769,-64.4710]]).T
 
         bmr_xyz_cs5_inch  = target_bmr_CS5_inch
 
