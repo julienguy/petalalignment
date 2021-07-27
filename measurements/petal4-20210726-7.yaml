@@ -1,0 +1,63 @@
+# Petal Position (Per DESI-3596)
+
+petal: 4
+
+# Which BMR (Ball Mount Refectors) mount plate configuration is used.
+# 3 choices :
+#  "guide_spikes" BMR plate mounted on the petal guide spikes for petal insertion procedure
+#  "light_weight_red_leg" # BMR plate mounted at the tip of the red
+#  "heavy_weight_red_leg" # BMR plate mounted at the tip of the red with a weight matching that of a petal
+
+bmr_type: "light_weight_red_leg"
+
+# PMA translation axis misalignment parameters
+# Are we going to correct for PMA axis misalignment ( 0 or 1 )
+
+correct_pma_misalignement: 1
+
+# this is the coordinates of the center of rotation
+# of the PMA arm, using the nest glued on the red
+# counter weight of the arm
+
+partially_engaged_pma_coords_inch: 0.0174,-0.0007,-72.6068
+retracted_pma_coords_inch: 0.0112,0.0036,-101.5149
+fully_engaged_pma_z_coord_inch: -50 # UNKNOWN FOR NOW
+
+# correct for the PMA arm rotation (THETA angle)
+# (used to go from one petal to the other)
+# 0=no or 1=yes
+
+correct_pma_arm_rotation: 0
+
+# correct for the leg rotation (PHI angle)
+# 0=no or 1=yes
+
+correct_pma_leg_rotation: 0
+
+# if not commented, will fix the leg rotation
+# to this number
+
+# fixed_pma_leg_rotation_phi : -0.2
+
+# use the lower struts to correct for
+# the vertical offset
+# 0=no or 1=yes
+
+correct_lower_struts_length: 1
+
+# uncomment to save moves in output csv file
+outfile: petal4-20210726-6-moves.csv
+
+# plot results
+
+plot: 0
+
+# measured BMR coordinates
+# name: X , Y , Z
+# in CS5 and inches
+# (if you miss one ball, just comment out the entry)
+
+B1: 6.4170,15.3948,-61.8322
+B2: 10.6859,11.9329,-61.8224
+B3: 13.5263,12.0454,-61.8192
+B4: 9.7044,17.2997,-61.8318
