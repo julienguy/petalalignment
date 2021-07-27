@@ -797,8 +797,8 @@ I will use a default file for now as a code test.
 
 
     #print ("HACK: pretend it's 1mm too high")
-    measured_bmr_PMA_inch = target_bmr_PMA_inch.copy()
-    measured_bmr_PMA_inch[1] += 1./inch2mm
+    #measured_bmr_PMA_inch = target_bmr_PMA_inch.copy()
+    #measured_bmr_PMA_inch[1] += 1./inch2mm
 
 
     print("mean z target_bmr_PMA_inch   = {:+0.2f} inch".format(np.mean(target_bmr_PMA_inch[2])))
