@@ -717,6 +717,7 @@ I will use a default file for now as a code test.
     if not "correct_lower_struts_length" in inputs :
         print("WARNING no keyword 'correct_lower_struts_length' found")
         print("I assume you don't want to correct from the lower (sled) struts length.")
+        correct_lower_struts_length = False
     else :
         val = int(inputs["correct_lower_struts_length"])
         assert (val in [0,1])
