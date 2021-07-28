@@ -445,7 +445,7 @@ class Transfo2D() :
     def __init__(self) :
         self.mirror    = False
         self.angle = 0
-        self.t  = np.zeros(3)
+        self.t  = np.zeros(3,dtype=float)
 
     def rotmat(self) :
         ca=np.cos(self.angle)
@@ -479,7 +479,7 @@ class Transfo2D() :
         diff=np.mean(target_xyz-input_xyz,axis=1)
 
         self.mirror = False
-        fits = opt.minimize(chi2, [0, diff[0],diff[1]],
+        fits = opt.minimize(chi2, [0., diff[0],diff[1]],
                                args = (input_xyz,target_xyz))
         params_direct = fits.x
         chi2_direct = chi2(params_direct,input_xyz,target_xyz)
