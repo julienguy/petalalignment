@@ -292,8 +292,8 @@ def compute_target_bmr_light_weight_red_leg_coords_mm(petal,plot=False) :
     bmr_6207_mm[:,2]=[128.6572029,-36.8625971,-25.8868659]
     bmr_6207_mm[:,3]=[-36.3462882,-36.7938889,-25.8457813]
 
-    xyz_6206 = np.array([ [0,0,0] , [-50,0,0] ]).T
-    xyz_6207 = np.array([ [0,0,0] , [50,0,0] ]).T
+    xyz_6206 = np.array([ [0.,0.,0.] , [-50.,0.,0.] ]).T
+    xyz_6207 = np.array([ [0.,0.,0.] , [50.,0.,0.] ]).T
     C6207_to_C6206 = Transfo()
     rms=C6207_to_C6206.fit(xyz_6207,xyz_6206)
     if debug : print("DEBUG rms(6207->6206) ={:.3f} mmm".format(rms))
@@ -365,8 +365,8 @@ def compute_target_bmr_heavy_weight_red_leg_coords_mm(petal,plot=False) :
     bmr_6211_mm[:,3]=[54.37223,69.8032562,-25.6009506]
     bmr_6211_mm[:,4]=[-49.2316389,35.6339609,-25.5679048]
 
-    xyz_6206 = np.array([ [0,0,0] , [-50,0,0] ]).T
-    xyz_6211 = np.array([ [0,50,0] , [0,0,0] ]).T
+    xyz_6206 = np.array([ [0.,0.,0.] , [-50.,0.,0.] ]).T
+    xyz_6211 = np.array([ [0.,50.,0.] , [0.,0.,0.] ]).T
     C6211_to_C6206 = Transfo()
     rms = C6211_to_C6206.fit(xyz_6211,xyz_6206)
     if debug: print("DEBUG rms(6211->6206) = {:.3f} mmm".format(rms))
