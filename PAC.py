@@ -582,6 +582,24 @@ I will use a default file for now as a code test.
             print("WARNING: no data for ball '{}'".format(bmr_label))
             valid_bmr[index]=False
 
+    # Input points along leg rail (in CS5)
+    #################################################
+    rail_xyz_cs5_inch = None
+    for p in range(1,100) :
+        key="RAIL{}".format(p)
+        if key in inputs :
+            if rail_xyz_cs5_inch is None :
+                rail_xyz_cs5_inch = []
+            rail_xyz_cs5_inch.append(str2array(inputs[key]))
+    if rail_xyz_cs5_inch is not None :
+        rail_xyz_cs5_inch = np.array(rail_xyz_cs5_inch).T
+        print("Read the coordinates of {} points along the leg rail:".format(rail_xyz_cs5_inch.shape[1]))
+        print(rail_xyz_cs5_inch.T)
+        if rail_xyz_cs5_inch.shape[1]<2 :
+            print("ERROR: need at least two points to measure the rail axis")
+            print("I will not try this")
+            rail_xyz_cs5_inch=None
+
     # Input PMA translation axis misalignment params
     #################################################
     if not "correct_pma_misalignement" in inputs :
@@ -788,7 +806,7 @@ I will use a default file for now as a code test.
         target_bmr_z_pma_inch = target_bmr_z_pma_mm / inch2mm
 
         delta_z = target_bmr_z_pma_inch-measured_z_pma_inch
-        print("for carriage_z = {:+.3f} delta_z = {:+.3f}".format(carriage_z,delta_z))
+        #print("for carriage_z = {:+.3f} delta_z = {:+.3f}".format(carriage_z,delta_z))
         carriage_z -= delta_z
 
 
@@ -800,9 +818,9 @@ I will use a default file for now as a code test.
     #measured_bmr_PMA_inch = target_bmr_PMA_inch.copy()
     #measured_bmr_PMA_inch[1] += 1./inch2mm
 
-
-    print("mean z target_bmr_PMA_inch   = {:+0.2f} inch".format(np.mean(target_bmr_PMA_inch[2])))
-    print("mean z measured_bmr_PMA_inch = {:+0.2f} inch".format(np.mean(measured_bmr_PMA_inch[2])))
+    print("Fitted carriage z            = {:+0.2f} inch".format(carriage_z))
+    print("mean z target_bmr (pma CS)   = {:+0.2f} inch".format(np.mean(target_bmr_PMA_inch[2])))
+    print("mean z measured_bmr (pma CS) = {:+0.2f} inch".format(np.mean(measured_bmr_PMA_inch[2])))
 
     if True : # Ignore difference in z
         print("Ignore average difference in z between measurements and targets")
@@ -845,8 +863,8 @@ I will use a default file for now as a code test.
     delta_inch_PMA = (measured_bmr_PMA_inch-target_bmr_PMA_inch)
     #dr_inch_PMA = np.sqrt(delta_inch_PMA[0]**2+delta_inch_PMA[1]**2)
     #print("BMR offsets PMA (sqrt(dx2+dy2), inch) =",array2str(dr_inch_PMA[valid_bmr]))
-    print("BMR mean offset dx (PMA)  = {:+.3f} mm".format(np.mean(delta_inch_PMA[0][valid_bmr])*inch2mm))
-    print("BMR mean offset dy (PMA)  = {:+.3f} mm".format(np.mean(delta_inch_PMA[1][valid_bmr])*inch2mm))
+    print("BMR mean offset dx (PMA)  = {:+.3f} mm (horizontal)".format(np.mean(delta_inch_PMA[0][valid_bmr])*inch2mm))
+    print("BMR mean offset dy (PMA)  = {:+.3f} mm (vertical, positive upward)".format(np.mean(delta_inch_PMA[1][valid_bmr])*inch2mm))
     #print("BMR mean offset dx (PMA) = {:+.3f} inch".format(np.mean(delta_inch[0][valid_bmr])))
     #print("BMR mean offset dy (PMA)  = {:+.3f} inch".format(np.mean(delta_inch[1][valid_bmr])))
     print("=================================================")
@@ -961,8 +979,6 @@ I will use a default file for now as a code test.
         print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
         print("!!! ERROR fit rms = {:.3f} mm !!!".format(rms_mm))
         print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-    else :
-        print("(fit rms = {:.3f} mm)".format(rms_mm))
     print("=================================================")
 
     # save moves as csv table
@@ -975,11 +991,11 @@ I will use a default file for now as a code test.
             movetable["PETAL"]=[petal]
             for name in moves.keys() :
                 movetable[name]=[moves[name]]
-            print("Move table")
-            print(movetable)
+            #print("Move table")
+            #print(movetable)
             movetable.write(outfile,overwrite=True)
-            print("wrote table in",outfile)
-            print("=================================================")
+            print("wrote move table in",outfile)
+            #print("=================================================")
     except Exception as e :
         print(e)
         pass
@@ -988,39 +1004,9 @@ I will use a default file for now as a code test.
     sys.stdout.flush()
 
 
-    if 0 :
+    if rail_xyz_cs5_inch is not None :
+        print("=================================================")
         print("Upper PMA upper rail alignment")
-
-        if 0 : # make up some numbers for now
-            nmeas=12
-            x = np.repeat(np.mean(target_bmr_CS5_inch[0])+0.1,nmeas)
-            y = np.repeat(np.mean(target_bmr_CS5_inch[1])+0.1,nmeas)
-            z = -np.linspace(0,10,nmeas) + np.mean(target_bmr_CS5_inch[2]) - 1
-            dxdz = np.tan(0.*np.pi/180)
-            dydz = np.tan(0.1*np.pi/180)
-            x += dxdz*(z-z[0])
-            y += dydz*(z-z[0])
-            rail_xyz_cs5_inch = np.array([x,y,z])
-
-        if 0 : # actual measurements, associated with petal4-20210726-6.yaml
-            rail_xyz_cs5_inch=np.array([[11.6507,15.8281,-88.6123],
-                                        [11.6533,15.8231,-85.8354],
-                                        [11.6551,15.8199,-82.7343],
-                                        [11.6610,15.8123,-78.5379],
-                                        [11.6671,15.8037,-75.3151],
-                                        [11.6758,15.7942,-72.4243],
-                                        [11.6865,15.7832,-68.9991],
-                                        [11.6865,15.7830,-68.9990],
-                                        [11.6943,15.7746,-64.2130]]).T
-
-        if 0 : # actual measurements, associated with petal4-20210726-7.yaml
-            # pretty good
-            # Rot3D: rotation angles x=0.00871 y=-0.00519 deg
-            rail_xyz_cs5_inch=np.array([[11.6958,15.7735,-88.6021],
-                                        [11.6908,15.7798,-82.3316],
-                                        [11.6900,15.7823,-77.0319],
-                                        [11.6956,15.7754,-71.5362],
-                                        [11.6984,15.7769,-64.4710]]).T
 
         bmr_xyz_cs5_inch  = target_bmr_CS5_inch
 
@@ -1034,6 +1020,8 @@ I will use a default file for now as a code test.
         print("Upper struts deltas (FOR RAIL ALIGNMENT ONLY) (mm):")
         for s,d in enumerate(upper_strut_deltas_inch) :
             print("  {} {:+.3f}".format(upper_struts_labels[s],d*inch2mm))
+        print("This change of struts was FOR RAIL ALIGNMENT ONLY.\nYou would need to add the two sets of deltas to do\nboth corrections at once\n(BMR coordinates and rail alignment).")
+        print("=================================================")
 
 
 

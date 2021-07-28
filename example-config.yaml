@@ -46,7 +46,7 @@ outfile: example-moves.csv
 
 # plot results
 
-plot: 1
+plot: 0
 
 # measured BMR coordinates
 # name: X , Y , Z
@@ -57,3 +57,14 @@ B1: -3.7424 , 16.1845 , -64.0084
 B2: 1.7538 , 16.0473 , -64.0017
 B3: 3.9335 , 17.8724 , -63.9971
 B4: -2.3009 , 19.6984 , -64.0030
+
+# Optional, rail measurements
+# because there can be a different number of points
+# I store them as an array per coordinate
+# X,Y,Z of points along the rail in CS5 and inches (variable number)
+RAIL1: 0.1588,19.6727,-85.0901
+RAIL2: 0.1570,19.6663,-80.9223
+RAIL3: 0.1600,19.6575,-75.4784
+RAIL4: 0.1660,19.6484,-70.1929
+RAIL5: 0.1751,19.6391,-65.3240
+RAIL6: 0.1799,19.6318,-60.9431
