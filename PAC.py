@@ -600,6 +600,35 @@ I will use a default file for now as a code test.
             print("I will not try this")
             rail_xyz_cs5_inch=None
 
+    # Forced deltas
+    #################################################
+    forced_delta_x_cs5_mm = None
+    forced_delta_x_cs5_mm = None
+    forced_delta_x_pma_mm = None
+    forced_delta_x_pma_mm = None
+    if "FORCED_DX_CS5_MM" in inputs and not "FORCED_DY_CS5_MM" in inputs :
+        print("ERROR: in configuration yaml file, need both FORCED_DX_CS5_MM and FORCED_DY_CS5_MM or none.")
+        sys.exit(12)
+    if "FORCED_DY_CS5_MM" in inputs and not "FORCED_DX_CS5_MM" in inputs :
+        print("ERROR: in configuration yaml file, need both FORCED_DX_CS5_MM and FORCED_DY_CS5_MM or none.")
+        sys.exit(12)
+    if "FORCED_DX_CS5_MM" in inputs and "FORCED_DY_CS5_MM" in inputs :
+        forced_delta_x_cs5_mm = float(inputs["FORCED_DX_CS5_MM"])
+        forced_delta_y_cs5_mm = float(inputs["FORCED_DY_CS5_MM"])
+    if "FORCED_DX_PMA_MM" in inputs and not "FORCED_DY_PMA_MM" in inputs :
+        print("ERROR: in configuration yaml file, need both FORCED_DX_PMA_MM and FORCED_DY_PMA_MM or none.")
+        sys.exit(12)
+    if "FORCED_DY_PMA_MM" in inputs and not "FORCED_DX_PMA_MM" in inputs :
+        print("ERROR: in configuration yaml file, need both FORCED_DX_PMA_MM and FORCED_DY_PMA_MM or none.")
+        sys.exit(12)
+
+    if "FORCED_DX_PMA_MM" in inputs and "FORCED_DY_PMA_MM" in inputs :
+        if "FORCED_DX_CS5_MM" in inputs or "FORCED_DY_CS5_MM" in inputs :
+            print("ERROR: in configuration file, cannot have both FORCED_DX_CS5_MM and FORCED_DX_PMA_MM")
+            sys.exit(12)
+        forced_delta_x_pma_mm = float(inputs["FORCED_DX_PMA_MM"])
+        forced_delta_y_pma_mm = float(inputs["FORCED_DY_PMA_MM"])
+
     # Input PMA translation axis misalignment params
     #################################################
     if not "correct_pma_misalignement" in inputs :
@@ -811,12 +840,21 @@ I will use a default file for now as a code test.
 
 
     target_bmr_PMA_inch   = CS5_to_PMA_inch(target_bmr_CS5_inch,carriage_z = carriage_z)
+
+
+    if forced_delta_x_cs5_mm is not None :
+        print ("!! WARNING: replace BMR data by direct offset of coordinates in CS5 dx_mm={:.2f} dy_mm={:.2f} !!".format(forced_delta_x_cs5_mm,forced_delta_y_cs5_mm))
+        measured_bmr_CS5_inch = target_bmr_CS5_inch.copy()
+        measured_bmr_CS5_inch[0] += forced_delta_x_cs5_mm/inch2mm
+        measured_bmr_CS5_inch[1] += forced_delta_y_cs5_mm/inch2mm
+
     measured_bmr_PMA_inch = CS5_to_PMA_inch(measured_bmr_CS5_inch,carriage_z = carriage_z)
 
-
-    #print ("HACK: pretend it's 1mm too high")
-    #measured_bmr_PMA_inch = target_bmr_PMA_inch.copy()
-    #measured_bmr_PMA_inch[1] += 1./inch2mm
+    if forced_delta_x_pma_mm is not None :
+        print ("!! WARNING: replace BMR data by direct offset of coordinates in PMA dx_mm={:.2f} dy_mm={:.2f} !!".format(forced_delta_x_pma_mm,forced_delta_y_pma_mm))
+        measured_bmr_PMA_inch = target_bmr_PMA_inch.copy()
+        measured_bmr_PMA_inch[0] += forced_delta_x_pma_mm/inch2mm
+        measured_bmr_PMA_inch[1] += forced_delta_y_pma_mm/inch2mm
 
     print("Fitted carriage z            = {:+0.2f} inch".format(carriage_z))
     print("mean z target_bmr (pma CS)   = {:+0.2f} inch".format(np.mean(target_bmr_PMA_inch[2])))
@@ -863,7 +901,7 @@ I will use a default file for now as a code test.
     delta_inch_PMA = (measured_bmr_PMA_inch-target_bmr_PMA_inch)
     #dr_inch_PMA = np.sqrt(delta_inch_PMA[0]**2+delta_inch_PMA[1]**2)
     #print("BMR offsets PMA (sqrt(dx2+dy2), inch) =",array2str(dr_inch_PMA[valid_bmr]))
-    print("BMR mean offset dx (PMA)  = {:+.3f} mm (horizontal)".format(np.mean(delta_inch_PMA[0][valid_bmr])*inch2mm))
+    print("BMR mean offset dx (PMA)  = {:+.3f} mm (horizontal, positive towards the laser tracker)".format(np.mean(delta_inch_PMA[0][valid_bmr])*inch2mm))
     print("BMR mean offset dy (PMA)  = {:+.3f} mm (vertical, positive upward)".format(np.mean(delta_inch_PMA[1][valid_bmr])*inch2mm))
     #print("BMR mean offset dx (PMA) = {:+.3f} inch".format(np.mean(delta_inch[0][valid_bmr])))
     #print("BMR mean offset dy (PMA)  = {:+.3f} inch".format(np.mean(delta_inch[1][valid_bmr])))

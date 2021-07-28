@@ -58,6 +58,21 @@ B2: 1.7538 , 16.0473 , -64.0017
 B3: 3.9335 , 17.8724 , -63.9971
 B4: -2.3009 , 19.6984 , -64.0030
 
+# Use the following ONLY to impose
+# a shift of the PMA based on the
+# visual inspection of the linear bearing
+# alignment to the rail.
+# THIS OVERWRITES THE ABOVE BMR COORDINATES
+# Use either CS5 or PMA coordinates
+# (not both at the same time)
+# offset units in mm
+#FORCED_DX_CS5_MM: 0.
+#FORCED_DY_CS5_MM: 1.
+# x pma is horizontal, positive towards the laser tracker
+# y pma is vertical, positive upward
+#FORCED_DX_PMA_MM: 0.
+#FORCED_DY_PMA_MM: 1.
+
 # Optional, rail measurements
 # because there can be a different number of points
 # I store them as an array per coordinate
