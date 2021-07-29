@@ -785,6 +785,7 @@ I will use a default file for now as a code test.
     xyz_center = compute_leg_center_of_rotation_cs5_mm(petal)/inch2mm
     xc  = xyz_center[0]
     yc  = xyz_center[1]
+    print("xc=",xc,"yc=",yc)
 
     dx1=x1-xc
     dy1=y1-yc
@@ -817,8 +818,8 @@ I will use a default file for now as a code test.
         moves["PHI"] = delta_phi
         measured_bmr_CS5_inch[0] -= xc
         measured_bmr_CS5_inch[1] -= yc
-        ca=np.cos(-mean_leg_angle_deg*np.pi/180)
-        sa=np.sin(-mean_leg_angle_deg*np.pi/180)
+        ca=np.cos(delta_phi*np.pi/180)
+        sa=np.sin(delta_phi*np.pi/180)
         rot= np.array([[ca,-sa,0],[sa,ca,0],[0,0,1]])
         measured_bmr_CS5_inch = rot.dot(measured_bmr_CS5_inch)
         measured_bmr_CS5_inch[0] += xc
