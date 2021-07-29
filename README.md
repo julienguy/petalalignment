@@ -112,9 +112,8 @@ B4: -2.3009 , 19.6984 , -64.0030
 #FORCED_DY_PMA_MM: 1.
 
 # Optional, rail measurements
-# because there can be a different number of points
-# I store them as an array per coordinate
-# X,Y,Z of points along the rail in CS5 and inches (variable number)
+# X,Y,Z of points along the rail in CS5 and inches 
+# (one row per point)
 RAIL1: 0.1588,19.6727,-85.0901
 RAIL2: 0.1570,19.6663,-80.9223
 RAIL3: 0.1600,19.6575,-75.4784
