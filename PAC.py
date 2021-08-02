@@ -185,13 +185,26 @@ def compute_target_bmr_guide_spikes_coords_mm(petal,plot=False) :
             plt.xlabel("X_GS1 (mm)")
             plt.ylabel("Y_GS1 (mm)")
 
-    # tuned to get carriage_z = -115.8456 inch
+    # z_pma = 59.935 inch = 1522.349 mm, tuned to get
+    # carriage_z = -115.8456 inch
     # needed to get the correct relative position
     # of the bmr and the upper struts.
     # this is about 10 inches in front of the red leg
     # bmr which is coherent
 
-    z_pma_mm = 59.935*inch2mm
+    # Pat measured
+    # "the average Z value for the four balls is 695.7427 mm closer
+    # to the telescope than the base of PMA strut 4"
+    # "I used the base of PMA strut 4. This is the PMA vertical strut
+    # that is closest to the telescope and on the left when facing
+    # the telescope"
+
+    # I think it is the US6 (not 4), with z_pma = 35.397 inch
+    # So the BMR z is = 35.397*25.4 + 695.7427 = 1594.8265 mm = 62.788 inch
+
+    #z_pma_mm = 59.935*inch2mm # changing this breaks agreement with orginal Van's code (but we do it anyway because we expect the new number to be more precise)
+    z_pma_mm = 1594.8265
+
     return bmr_CS5_mm , z_pma_mm
 
 ######################################################################
@@ -1111,11 +1124,12 @@ I will use a default file for now as a code test.
             xyz1=xyz2plot(upper_struts_base_xyz)
             xyz2=xyz2plot(initial_upper_struts_plateform_xyz)
             for s in range(6) :
+
                 ax.plot3D([xyz1[0,s],xyz2[0,s]],
                           [xyz1[1,s],xyz2[1,s]],
                           [xyz1[2,s],xyz2[2,s]],
                       color="red")
-                ax.text3D(xyz1[0,s],xyz1[1,s],xyz1[2,s],upper_struts_labels[s],color="red")
+                ax.text3D(xyz1[0,s],xyz1[1,s],xyz1[2,s]," "+upper_struts_labels[s],color="red")
 
             # lower struts
             xyz1=xyz2plot(lower_struts_base_xyz)
@@ -1125,7 +1139,7 @@ I will use a default file for now as a code test.
                           [xyz1[1,s],xyz2[1,s]],
                           [xyz1[2,s],xyz2[2,s]],
                       color="brown")
-                ax.text3D(xyz1[0,s],xyz1[1,s],xyz1[2,s],lower_struts_labels[s],color="brown")
+                ax.text3D(xyz1[0,s],xyz1[1,s],xyz1[2,s]," "+lower_struts_labels[s],color="brown")
 
             # bmr
             xyz=xyz2plot(measured_bmr_PMA_inch)
@@ -1168,8 +1182,8 @@ I will use a default file for now as a code test.
                 xyz=np.array([[0,0,0],[1,0,0],[1,1,0],[0,1,0],[0,0,1],[1,0,1],[1,1,1],[0,1,1]],dtype=float).T
                 xyz-=np.array([0.5,0.5,0.5])[:,None]
                 xyz *= side
+                xyz[1]+=60
                 xyz[2]-=20
-                #xyz[1]+=50
                 ax.plot3D(xyz[0],xyz[1],xyz[2],".",color="gray",alpha=0.1)
 
             ax.set_xlabel('-x_PMA')
