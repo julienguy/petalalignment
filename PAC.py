@@ -185,24 +185,22 @@ def compute_target_bmr_guide_spikes_coords_mm(petal,plot=False) :
             plt.xlabel("X_GS1 (mm)")
             plt.ylabel("Y_GS1 (mm)")
 
+    # For agreement with orginal code from Van:
     # z_pma = 59.935 inch = 1522.349 mm, tuned to get
     # carriage_z = -115.8456 inch
     # needed to get the correct relative position
     # of the bmr and the upper struts.
     # this is about 10 inches in front of the red leg
-    # bmr which is coherent
+    # bmr which is coherent.
 
-    # Pat measured
+    # More recently Pat measured on the SolidWorks model that
     # "the average Z value for the four balls is 695.7427 mm closer
-    # to the telescope than the base of PMA strut 4"
-    # "I used the base of PMA strut 4. This is the PMA vertical strut
-    # that is closest to the telescope and on the left when facing
-    # the telescope"
+    # to the telescope than the base of PMA strut (#6)"
+    # "This is the PMA vertical strut that is closest to the telescope
+    # and on the left when facing the telescope"
+    # It is 'US6' with z_pma = 35.397 inch
+    # So the BMR z_pma = 35.397*25.4 + 695.7427 = 1594.8265 mm = 62.788 inch
 
-    # I think it is the US6 (not 4), with z_pma = 35.397 inch
-    # So the BMR z is = 35.397*25.4 + 695.7427 = 1594.8265 mm = 62.788 inch
-
-    #z_pma_mm = 59.935*inch2mm # changing this breaks agreement with orginal Van's code (but we do it anyway because we expect the new number to be more precise)
     z_pma_mm = 1594.8265
 
     return bmr_CS5_mm , z_pma_mm
