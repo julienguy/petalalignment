@@ -1083,7 +1083,7 @@ I will use a default file for now as a code test.
             if not valid_bmr[b]:
                 #print("ball {} has no valid data".format(bmr_labels[b]))
                 continue
-            plt.plot(xyz[0,b],xyz[1,b],"o",color="k",alpha=0.5)
+            plt.plot(xyz[0,b],xyz[1,b],"x",color="k",alpha=0.5)
             plt.text(xyz[0,b]+10,xyz[1,b]+10,bmr_labels[b],color="k")
 
         x_cs5=[]
@@ -1102,8 +1102,8 @@ I will use a default file for now as a code test.
         z_cs5.append(0)
         plt.plot(np.hstack(x_cs5),np.hstack(y_cs5),color="gray")
         plt.gca().set_aspect('equal', adjustable='box')
-        plt.xlabel("X_CS5 (mm)")
-        plt.ylabel("Y_CS5 (mm)")
+        plt.xlabel(r"$x_{CS5}$ (mm)")
+        plt.ylabel(r"$y_{CS5}$ (mm)")
         plt.grid()
 
         if 1 :
@@ -1118,76 +1118,65 @@ I will use a default file for now as a code test.
                 res[2]=xyz[1] # y
                 return res
 
-            # upper struts
-            xyz1=xyz2plot(upper_struts_base_xyz)
-            xyz2=xyz2plot(initial_upper_struts_plateform_xyz)
-            for s in range(6) :
+            if 1 : # upper struts
+                xyz1=xyz2plot(upper_struts_base_xyz)
+                xyz2=xyz2plot(initial_upper_struts_plateform_xyz)
+                for s in range(6) :
 
-                ax.plot3D([xyz1[0,s],xyz2[0,s]],
-                          [xyz1[1,s],xyz2[1,s]],
-                          [xyz1[2,s],xyz2[2,s]],
-                      color="red")
-                ax.text3D(xyz1[0,s],xyz1[1,s],xyz1[2,s]," "+upper_struts_labels[s],color="red")
+                    ax.plot3D([xyz1[0,s],xyz2[0,s]],
+                              [xyz1[1,s],xyz2[1,s]],
+                              [xyz1[2,s],xyz2[2,s]],
+                          color="red")
+                    ax.text3D(xyz1[0,s],xyz1[1,s],xyz1[2,s]," "+upper_struts_labels[s],color="red")
 
-            # lower struts
-            xyz1=xyz2plot(lower_struts_base_xyz)
-            xyz2=xyz2plot(initial_lower_struts_plateform_xyz)
-            for s in range(6) :
-                ax.plot3D([xyz1[0,s],xyz2[0,s]],
-                          [xyz1[1,s],xyz2[1,s]],
-                          [xyz1[2,s],xyz2[2,s]],
-                      color="brown")
-                ax.text3D(xyz1[0,s],xyz1[1,s],xyz1[2,s]," "+lower_struts_labels[s],color="brown")
+            if 1 : # lower struts
+                xyz1=xyz2plot(lower_struts_base_xyz)
+                xyz2=xyz2plot(initial_lower_struts_plateform_xyz)
+                for s in range(6) :
+                    ax.plot3D([xyz1[0,s],xyz2[0,s]],
+                              [xyz1[1,s],xyz2[1,s]],
+                              [xyz1[2,s],xyz2[2,s]],
+                          color="brown")
+                    ax.text3D(xyz1[0,s],xyz1[1,s],xyz1[2,s]," "+lower_struts_labels[s],color="brown")
 
-            # bmr
-            xyz=xyz2plot(measured_bmr_PMA_inch)
-            ax.scatter3D(xyz[0,valid_bmr],xyz[1,valid_bmr],xyz[2,valid_bmr],color="green",label="measured BMR")
-            xyz=xyz2plot(target_bmr_PMA_inch)
-            ax.scatter3D(xyz[0],xyz[1],xyz[2],color="blue",label="target BMR")
-            for b in range(4) :
-                ax.text3D(xyz[0,b],xyz[1,b],xyz[2,b],bmr_labels[b],color="blue")
+            if 1 : # bmr
+                xyz=xyz2plot(measured_bmr_PMA_inch)
+                ax.plot3D(xyz[0,valid_bmr],xyz[1,valid_bmr],xyz[2,valid_bmr],"x",color="k",label="measured BMR")
+                xyz=xyz2plot(target_bmr_PMA_inch)
+                ax.scatter3D(xyz[0],xyz[1],xyz[2],color="C0",label="target BMR")
+                for b in range(4) :
+                    ax.text3D(xyz[0,b],xyz[1,b],xyz[2,b],bmr_labels[b],color="C0")
 
-            # focal plane
-            t=np.linspace(0,2*np.pi,100)
-            rad=410./inch2mm # inch
-            x_cs5 = rad*np.cos(t)
-            y_cs5 = rad*np.sin(t)
-            z_cs5 = np.zeros(t.shape)
-            xyz = xyz2plot(CS5_to_PMA_inch(np.array([x_cs5,y_cs5,z_cs5]),carriage_z = carriage_z))
-            ax.plot3D(xyz[0],xyz[1],xyz[2],color="gray")
+            if 1 : # focal plane
+                t=np.linspace(0,2*np.pi,100)
+                rad=410./inch2mm # inch
+                x_cs5 = rad*np.cos(t)
+                y_cs5 = rad*np.sin(t)
+                z_cs5 = np.zeros(t.shape)
+                xyz = xyz2plot(CS5_to_PMA_inch(np.array([x_cs5,y_cs5,z_cs5]),carriage_z = carriage_z))
+                ax.plot3D(xyz[0],xyz[1],xyz[2],color="gray",alpha=0.5)
 
-            x_cs5=[]
-            y_cs5=[]
-            z_cs5=[]
-            x_cs5.append(rad*np.sin(2*np.pi/10.*(petal-0.5)))
-            y_cs5.append(-rad*np.cos(2*np.pi/10.*(petal-0.5)))
-            z_cs5.append(0)
-            x_cs5.append(0)
-            y_cs5.append(0)
-            z_cs5.append(0)
-            x_cs5.append(rad*np.sin(2*np.pi/10.*(petal+0.5)))
-            y_cs5.append(-rad*np.cos(2*np.pi/10.*(petal+0.5)))
-            z_cs5.append(0)
-            xyz = xyz2plot(CS5_to_PMA_inch(np.array([x_cs5,y_cs5,z_cs5]),carriage_z = carriage_z))
-            ax.plot3D(xyz[0],xyz[1],xyz[2],color="gray")
+            if 1 : # CS5 coordinate system
+                xyz = xyz2plot(CS5_to_PMA_inch(np.array([[0,0],[0,1.2*rad],[0,0]]),carriage_z = carriage_z))
+                ax.plot3D(xyz[0],xyz[1],xyz[2],"--",color="gray",alpha=0.5)
+                ax.text3D(xyz[0,1],xyz[1,1],xyz[2,1],r"$y_{CS5}$",color="gray")
 
-            xyz = xyz2plot(CS5_to_PMA_inch(np.array([[0,0],[0,-rad],[0,0]]),carriage_z = carriage_z))
-            ax.plot3D(xyz[0],xyz[1],xyz[2],"--",color="gray",label="-y_CS5")
+                xyz = xyz2plot(CS5_to_PMA_inch(np.array([[0,1.2*rad],[0,0],[0,0]]),carriage_z = carriage_z))
+                ax.plot3D(xyz[0],xyz[1],xyz[2],"--",color="gray",alpha=0.5)
+                ax.text3D(xyz[0,1],xyz[1,1],xyz[2,1],r"$x_{CS5}$",color="gray")
 
+            if 1 : # petal
+                t=2*np.pi/10.*np.linspace(petal-0.5,petal+0.5,10)
+                x_cs5 = np.hstack([0,rad*np.sin(t),0])
+                y_cs5 = np.hstack([0,-rad*np.cos(t),0])
+                z_cs5 = np.zeros(x_cs5.shape)
+                xyz = xyz2plot(CS5_to_PMA_inch(np.array([x_cs5,y_cs5,z_cs5]),carriage_z = carriage_z))
+                ax.plot3D(xyz[0],xyz[1],xyz[2],color="green",label="petal {}".format(petal))
 
-            if 1 : # just to get a square
-                side=140
-                xyz=np.array([[0,0,0],[1,0,0],[1,1,0],[0,1,0],[0,0,1],[1,0,1],[1,1,1],[0,1,1]],dtype=float).T
-                xyz-=np.array([0.5,0.5,0.5])[:,None]
-                xyz *= side
-                xyz[1]+=60
-                xyz[2]-=20
-                ax.plot3D(xyz[0],xyz[1],xyz[2],".",color="gray",alpha=0.1)
-
-            ax.set_xlabel('-x_PMA')
-            ax.set_ylabel('z_PMA')
-            ax.set_zlabel('y_PMA')
-            ax.legend(title="petal {}".format(petal))
+            ax.set_xlabel(r'$-x_{PMA}$')
+            ax.set_ylabel(r'$z_{PMA}$')
+            ax.set_zlabel(r'$y_{PMA}$')
+            ax.legend()
 
         sys.stdout.flush()
         plt.show()
