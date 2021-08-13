@@ -736,6 +736,15 @@ I will use a default file for now as a code test.
         if correct_lower_struts_length :
             print("Will correct for the lower (sled) struts length")
 
+    if not "lower_struts_xy_translation" in inputs :
+        lower_struts_xy_translation = False
+    else :
+        val = int(inputs["lower_struts_xy_translation"])
+        assert (val in [0,1])
+        lower_struts_xy_translation = (val==1)
+        if lower_struts_xy_translation :
+            print("Will use lower (sled) struts to adjust xy translation")
+
     ##############################################################
 
     moves = dict()
@@ -929,19 +938,20 @@ I will use a default file for now as a code test.
 
         sled_adjust = Transfo2D()
 
-        if 1 :
+        if not lower_struts_xy_translation  :
             print(" Fit pure vertical translation")
             sled_adjust.angle=0.
             sled_adjust.t[0]=0.
             sled_adjust.t[1]=np.mean(target_bmr_PMA_inch[1][valid_bmr]-measured_bmr_PMA_inch[1][valid_bmr])
-        elif 0 :
+        else :
             print(" Fit pure xy translation")
             sled_adjust.angle=0.
             sled_adjust.t[0]=np.mean(target_bmr_PMA_inch[0][valid_bmr]-measured_bmr_PMA_inch[0][valid_bmr])
             sled_adjust.t[1]=np.mean(target_bmr_PMA_inch[1][valid_bmr]-measured_bmr_PMA_inch[1][valid_bmr])
-        else :
-            print(" Fit xy translation + rotation about z axis")
-            rms = sled_adjust.fit(measured_bmr_PMA_inch[:,valid_bmr],target_bmr_PMA_inch[:,valid_bmr],test_mirror=False)
+
+        #else  :
+        #    print(" Fit xy translation + rotation about z axis")
+        #    rms = sled_adjust.fit(measured_bmr_PMA_inch[:,valid_bmr],target_bmr_PMA_inch[:,valid_bmr],test_mirror=False)
 
         predicted_new_bmr_PMA_inch = sled_adjust.apply(measured_bmr_PMA_inch)
         dist2_inch = np.sum((predicted_new_bmr_PMA_inch - target_bmr_PMA_inch)**2,axis=0)
