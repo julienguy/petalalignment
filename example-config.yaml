@@ -40,13 +40,19 @@ correct_pma_leg_rotation: 1
 
 correct_lower_struts_length: 1
 
+# uncomment and set to 1 to allow an arbitrary
+# xy translation (and not just vertical shift)
+# with the lower struts.
+
+lower_struts_xy_translation: 0
+
 # uncomment this to save the moves in an output csv table file
 
 # outfile: example-moves.csv
 
 # plot results (0=no or 1=yes)
 
-plot: 0
+plot: 1
 
 # measured BMR coordinates
 # name: X , Y , Z
