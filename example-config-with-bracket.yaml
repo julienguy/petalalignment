@@ -1,4 +1,5 @@
-# Initial default test that reproduces Van's example
+# Example of alignment configuration for petal insertion
+# which a new bmr "bracket" in place of the guide spikes
 
 # Petal Position (Per DESI-3596)
 
@@ -43,7 +44,7 @@ correct_pma_leg_rotation: 0
 correct_lower_struts_length: 0
 
 # uncomment to save moves in output csv file
-outfile: measurements/petal4-insertion-20210804-moves-1.csv
+# outfile: measurements/moves.csv
 
 # plot results
 
