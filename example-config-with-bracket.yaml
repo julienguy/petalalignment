@@ -1,0 +1,73 @@
+# Initial default test that reproduces Van's example
+
+# Petal Position (Per DESI-3596)
+
+petal: 0
+
+# Which BMR (Ball Mount Refectors) mount plate configuration is used.
+# 4 choices :
+#  "guide_spikes" BMR plate mounted on the petal guide spikes for petal insertion procedure
+#  "bracket"
+#  "light_weight_red_leg" # BMR plate mounted at the tip of the red
+#  "heavy_weight_red_leg" # BMR plate mounted at the tip of the red with a weight matching that of a petal
+
+bmr_type: "bracket"
+
+# PMA translation axis misalignment parameters
+# Are we going to correct for PMA axis misalignment ( 0 or 1 )
+correct_pma_misalignement: 1
+partially_engaged_pma_coords_inch: 0.0174,-0.0007,-72.6068
+retracted_pma_coords_inch: 0.0112,0.0036,-101.5149
+fully_engaged_pma_z_coord_inch: -50 # approximate
+
+# correct for the PMA arm rotation (THETA angle)
+# (used to go from one petal to the other)
+# 0=no or 1=yes
+
+correct_pma_arm_rotation: 0
+
+# correct for the leg rotation (PHI angle)
+# 0=no or 1=yes
+
+correct_pma_leg_rotation: 0
+
+# if not commented, will fix the leg rotation
+# to this number
+
+#fixed_pma_leg_rotation_phi : 0
+
+# use the lower struts to correct for
+# the vertical offset
+# 0=no or 1=yes
+
+correct_lower_struts_length: 0
+
+# uncomment to save moves in output csv file
+outfile: measurements/petal4-insertion-20210804-moves-1.csv
+
+# plot results
+
+plot: 1
+
+# Use calibration data to convert measured bracket bmr coordinates
+# into guide spikes
+
+CALIB_GS_B1: 3.234, -16.598, -55.905
+CALIB_GS_B2: 1.666, -18.956, -55.923
+CALIB_GS_B3: -3.645, -20.362, -55.935
+CALIB_GS_B4: -3.247, -16.591, -55.918
+
+CALIB_BRACKET_B1: 4.234, -17.598, -55.905
+CALIB_BRACKET_B2: 2.666, -19.956, -55.923
+CALIB_BRACKET_B3: -2.645, -21.362, -55.935
+CALIB_BRACKET_B4: -2.247, -17.591, -55.918
+
+
+# Measurements from laser tracker in CS5 in inches
+# X , Y , Z
+# (here the bracket bmr coordinates)
+# 1 mm x offset:
+B1: 4.27337, -17.598, -55.905
+B2: 2.705370, -19.956, -55.923
+B3: -2.6006, -21.362, -55.935
+B4: -2.207629, -17.591, -55.918

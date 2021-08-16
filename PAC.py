@@ -553,14 +553,14 @@ I will use a default file for now as a code test.
 
     # Compute target bmr coords in CS5 from metrology
     #################################################
-    if inputs["bmr_type"] == "guide_spikes" :
+    if inputs["bmr_type"] == "guide_spikes" or inputs["bmr_type"] == "bracket" :
         target_bmr_CS5_mm , target_bmr_z_pma_mm  = compute_target_bmr_guide_spikes_coords_mm(petal,plot=plot)
     elif inputs["bmr_type"]== "light_weight_red_leg" :
         target_bmr_CS5_mm , target_bmr_z_pma_mm = compute_target_bmr_light_weight_red_leg_coords_mm(petal,plot=plot)
     elif inputs["bmr_type"]== "heavy_weight_red_leg" :
         target_bmr_CS5_mm , target_bmr_z_pma_mm = compute_target_bmr_heavy_weight_red_leg_coords_mm(petal,plot=plot)
     else :
-        print('error {} not in ["guide_spikes","light_weight_red_leg","heavy_weight_red_leg"]'.format(inputs["bmr_type"]))
+        print('error {} not in ["guide_spikes","bracket","light_weight_red_leg","heavy_weight_red_leg"]'.format(inputs["bmr_type"]))
         sys.exit(2)
     target_bmr_CS5_inch = target_bmr_CS5_mm/inch2mm
 
@@ -569,6 +569,9 @@ I will use a default file for now as a code test.
         print("{} {}".format(b,array2str(target_bmr_CS5_inch[:,b])))
     print("Mean target CS5 z (mm)=",np.mean(target_bmr_CS5_inch[2]*inch2mm))
     #################################################
+
+
+
 
 
     # Input BMR Locations (in CS5, will change input method later)
@@ -582,6 +585,31 @@ I will use a default file for now as a code test.
     number_of_balls=len(bmr_labels)
     measured_bmr_CS5_inch = np.zeros((3,number_of_balls))
 
+
+
+    # Check if config with bracket
+    #################################################
+    if inputs["bmr_type"] == "bracket" :
+        print("Read calibration data first")
+
+        calib_gs_bmr_labels=["CALIB_GS_B1","CALIB_GS_B2","CALIB_GS_B3","CALIB_GS_B4"]
+        calib_gs_bmr_CS5_inch=np.zeros((3,4))
+        for index,bmr_label in enumerate( calib_gs_bmr_labels) :
+            if not bmr_label in inputs:
+                print("error, need coordinates for CALIB_GS_B1 CALIB_GS_B2 CALIB_GS_B3 CALIB_GS_B4")
+                sys.exit(1)
+            calib_gs_bmr_CS5_inch[:,index] = str2array(inputs[bmr_label])
+            print("{} {}".format(bmr_label,inputs[bmr_label]))
+
+        calib_bracket_bmr_labels=["CALIB_BRACKET_B1","CALIB_BRACKET_B2","CALIB_BRACKET_B3","CALIB_BRACKET_B4"]
+        calib_bracket_bmr_CS5_inch=np.zeros((3,4))
+        for index,bmr_label in enumerate( calib_bracket_bmr_labels) :
+            if not bmr_label in inputs:
+                print("error, need coordinates for CALIB_BRACKET_B1 CALIB_BRACKET_B2 CALIB_BRACKET_B3 CALIB_BRACKET_B4")
+                sys.exit(1)
+            calib_bracket_bmr_CS5_inch[:,index] = str2array(inputs[bmr_label])
+            print("{} {}".format(bmr_label,inputs[bmr_label]))
+
     print("Input BMR coordinates (inch):")
     valid_bmr = np.repeat(False,number_of_balls)
     for index,bmr_label in enumerate(bmr_labels) :
@@ -592,6 +620,18 @@ I will use a default file for now as a code test.
         else :
             print("WARNING: no data for ball '{}'".format(bmr_label))
             valid_bmr[index]=False
+
+    if inputs["bmr_type"] == "bracket" :
+        print("Fit transform between calib and current bracket bmr data")
+        transfo = Transfo2D()
+        transfo.fit(calib_bracket_bmr_CS5_inch[:,valid_bmr],measured_bmr_CS5_inch[:,valid_bmr])
+        print(transfo)
+        print("Apply transform to calib guide spikes bmr data")
+        measured_bmr_CS5_inch = transfo.apply(calib_gs_bmr_CS5_inch)
+        print("Now we consider we have the GS data")
+
+
+
 
     # Input points along leg rail (in CS5)
     #################################################
