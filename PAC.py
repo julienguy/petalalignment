@@ -624,8 +624,9 @@ I will use a default file for now as a code test.
     if inputs["bmr_type"] == "bracket" :
         print("Fit transform between calib and current bracket bmr data")
         transfo = Transfo2D()
-        transfo.fit(calib_bracket_bmr_CS5_inch[:,valid_bmr],measured_bmr_CS5_inch[:,valid_bmr])
+        rms = transfo.fit(calib_bracket_bmr_CS5_inch[:,valid_bmr],measured_bmr_CS5_inch[:,valid_bmr],test_mirror=False)
         print(transfo)
+        print("rms of fit residuals = {:.4f} mm".format(rms*inch2mm))
         print("Apply transform to calib guide spikes bmr data")
         measured_bmr_CS5_inch = transfo.apply(calib_gs_bmr_CS5_inch)
         print("Now we consider we have the GS data")
